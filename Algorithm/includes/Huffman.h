@@ -1,11 +1,19 @@
 #ifndef __HUFFMAN__H
 #define __HUFFMAN__H
+
+#include <fstream>
+#include <iostream>
+#include <stdlib.h>
+
+#define NUMCHARS 256 
+
 class Huffman {
 private:
-	char* inFile;
-	char* outFile;
+	char* mInFile;
+	char* mOutFile;
 	int* freqTable;
-	void buildFrequenceTable();
+	void threeWayQuickSort(int*, int, int);
+	void buildFrequencyTable();
 	void buildPrefixFreeTree();
 	void writePrefixFreeTree();
 	void writeCompressedText();
@@ -13,7 +21,10 @@ private:
 	void decodeCompressedText();
 	void writeUncompressedText();
 public:
-	Huffman(char*, char*);
+	Huffman(char* inFile, char* outFile) {
+		mInFile = inFile;
+		mOutFile = outFile;
+	}
 	void encode();
 	void decode();
 };

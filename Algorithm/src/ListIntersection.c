@@ -29,14 +29,10 @@ void threeWayQuickSort(int* inArray, int left, int right) {
 	int i = left, j = left, k = right;
 	int pivot = inArray[left + rand()%(right - left + 1)];
 	while (i <= k) {
-		if (inArray[i] < pivot) { 
-			swap(inArray, i, j);
-			i++; j++;
-		}
-		else if (inArray[i] > pivot) {
-			swap(inArray, i, k);
-			k--;
-		}
+		if (inArray[i] < pivot) 
+			swap(inArray, i++, j++);
+		else if (inArray[i] > pivot)
+			swap(inArray, i, k--);
 		else i++;
 	}
 	threeWayQuickSort(inArray, left, j - 1);
