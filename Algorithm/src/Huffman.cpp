@@ -10,33 +10,55 @@ static bool bitField[NUMCHARS];
 // length of the huffman code
 static int fieldLength = 0;
 
+void flushBuffer(ofstream &stream) {
+	if (bufferSize != 0) {
+		int toFlush = 8 - bufferSize;
+		buffer = buffer<<toFlush;
+		stream.put(buffer);
+	}
+}
 // keep appending to buffer till we have enough
 // to flush a byte
-void appendToBuffer(ofstream &outStream, bool bit) {
+void writeBit(ofstream &stream, bool bit) {
 	buffer = buffer<<1|bit;
 	if (++bufferSize == 8) {
-		outStream.put(buffer);
+		stream.put(buffer);
 		bufferSize = 0;
 		buffer = 0;
 	}
 }
 
 // output huffman code length before the actual code
-void writeFieldLength(ofstream &stream, int length) {
-	cout<<"Length "<<fieldLength<<endl;
-	// length can max be 8 bits (256) hence only needs bits 0-7
+void writeByte(ofstream &stream, unsigned char codePoint) {
 	if (bufferSize != 0) {
 		int toFlush = 8 - bufferSize;
-		// pick the top toFlush bits of the length
-		int mask = (1<<toFlush - 1)<<bufferSize;
-		buffer = buffer<<toFlush;
-		buffer = buffer|((length&mask)>>bufferSize);
+		buffer = buffer<<toFlush|codePoint>>bufferSize;
 		stream.put(buffer);
-		// pick up the remaining bits of length
-		mask = (1<<bufferSize - 1);
-		buffer = length&mask;
+		// msd toFlush bits will be ignored
+		buffer = codePoint;
 	}
-	else stream.put((char)length);
+	else stream.put(codePoint);
+}
+
+bool readBit(ifstream &stream) {
+	if (bufferSize == 0) {
+		stream.get(buffer);
+		bufferSize = 8;
+	}
+	int mask = 1<<(bufferSize - 1);
+	bufferSize--;
+	return buffer&mask;
+}
+
+unsigned char readByte(ifstream &stream) {
+	unsigned char byte;
+	if (bufferSize != 0) {
+		byte = buffer<<(8 - bufferSize);
+		stream.get(buffer);
+		byte = byte|buffer>>bufferSize;
+	} 
+	stream.get((char&)byte);
+	return byte;
 }
  
 void printFreqTable(FreqInfo** freqTable) {
@@ -67,16 +89,16 @@ void Huffman::threeWayQuickSort(FreqInfo** inArray, int left, int right) {
 }
 
 void Huffman::buildFrequencyTable() {
-	ifstream inStream(mInFile, ios::in|ios::binary);    
-	if(inStream.eof()) {
+	ifstream stream(mInFile, ios::in|ios::binary);    
+	if(stream.eof()) {
 		cout<<"EOF reached"<<endl;
 		exit(EXIT_FAILURE);
 	}
-	else if (inStream.bad()) {
+	else if (stream.bad()) {
 		cout<<"Bad bit set"<<endl;
 		exit(EXIT_FAILURE);
 	}
-	else if (inStream.fail()) {
+	else if (stream.fail()) {
 		cout<<"Fail bit set"<<endl;
 		exit(EXIT_FAILURE);
 	}
@@ -85,13 +107,13 @@ void Huffman::buildFrequencyTable() {
 	freqTable = new FreqInfo*[NUMCHARS]; 
 	for (int i = 0; i < NUMCHARS; i++) {
 		freqTable[i] = new FreqInfo;
-		freqTable[i]->codePoint = (char) i;
+		freqTable[i]->codePoint = (unsigned char) i;
 	} 
-	while (inStream.good()) {
-		inStream.get(current);
+	while (stream.good()) {
+		stream.get(current);
 		freqTable[current]->freq++;
 	}
-	inStream.close();
+	stream.close();
 }
 
 #define CREATE_ROOT() \
@@ -104,9 +126,12 @@ void Huffman::buildFrequencyTable() {
 void Huffman::buildPrefixFreeTree() {
 	int q1Left = 0;
 	FreqInfo *first, *second;
-	threeWayQuickSort(freqTable, 0, NUMCHARS - 1);
-	while(freqTable[q1Left]->freq == 0) q1Left++; 
-	Queue* queueOne = new Queue(freqTable, q1Left, NUMCHARS - 1);
+	FreqInfo** copy = new FreqInfo*[NUMCHARS];
+	for (int i = 0; i < NUMCHARS; i++)
+		copy[i] = freqTable[i];
+	threeWayQuickSort(copy, 0, NUMCHARS - 1);
+	while(copy[q1Left]->freq == 0) q1Left++; 
+	Queue* queueOne = new Queue(copy, q1Left, NUMCHARS - 1);
 	// we decrease number of elems by one each iteration and we stop
 	// after length - 1 iterations of original array, hence second queue's
 	// size is bounded as below.
@@ -162,21 +187,23 @@ void Huffman::buildPrefixFreeTree() {
 void Huffman::writePrefixFreeTree(FreqInfo* root, ofstream& stream) {
 	if (root->left == NULL) {
 		// leaf node
-		appendToBuffer(stream, true);
+		writeBit(stream, true);
 		// write length of huffman code
 		cout<<"Code Point "<<(int)root->codePoint<<"\t";
-		writeFieldLength(stream, fieldLength);
+		writeByte(stream, root->codePoint);
 		root->fieldLength = fieldLength; 
 		root->bitField = new bool[fieldLength];
+		cout<<"Code ";
 		// write the huffman code
 		for (int i = 0; i < fieldLength; i++) {
+			cout<<bitField[i];
 			root->bitField[i] = bitField[i];
-			appendToBuffer(stream, bitField[i]);
 		}
+		cout<<endl;
 	}
 	else {
 		// non-leaf node
-		appendToBuffer(stream, false);	
+		writeBit(stream, false);	
 		// fieldLength++ - push stack
 		bitField[fieldLength++] = false;
 		writePrefixFreeTree(root->left, stream);
@@ -209,13 +236,62 @@ void Huffman::writeCompressedText(ofstream& outStream) {
 		inStream.get(current);
 		node = freqTable[current];
 		for (int i = 0; i < node->fieldLength; i++) {
-			appendToBuffer(outStream, node->bitField[i]);
+			writeBit(outStream, node->bitField[i]);
 		}
 	}
 	inStream.close();
 }
 
-void Huffman::binaryToPrefixFreeTree() {
+void Huffman::encode() {
+	buildFrequencyTable();
+	buildPrefixFreeTree();
+	ofstream stream(mOutFile, ios::out|ios::binary);
+	writePrefixFreeTree(mRoot, stream);
+	writeCompressedText(stream);
+	flushBuffer(stream);
+}
+
+void Huffman::readPrefixFreeTree(ifstream &stream) {
+	if(stream.eof()) {
+		cout<<"EOF reached"<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else if (stream.bad()) {
+		cout<<"Bad bit set"<<endl;
+		exit(EXIT_FAILURE);
+	}
+	else if (stream.fail()) {
+		cout<<"Fail bit set"<<endl;
+		exit(EXIT_FAILURE);
+	}
+	mRoot = new FreqInfo;
+	parsePrefixFreeTree(mRoot, stream);
+}
+
+void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
+	bool current = readBit(stream);
+	if (current) {
+		root->codePoint = readByte(stream);
+		cout<<"Code Point "<<(int)root->codePoint<<"\t";
+		root->fieldLength = fieldLength; 
+		root->bitField = new bool[fieldLength];
+		cout<<"Code ";
+		// write the huffman code
+		for (int i = 0; i < fieldLength; i++) {
+			cout<<bitField[i];
+			root->bitField[i] = bitField[i];
+		}
+		cout<<endl;
+	}
+	else {
+		root->left = new FreqInfo;
+		root->right = new FreqInfo;
+		bitField[fieldLength++] = false;
+		parsePrefixFreeTree(root->left, stream);
+		bitField[fieldLength++] = true;
+		parsePrefixFreeTree(root->right, stream);
+	}
+	fieldLength--;
 }
 
 void Huffman::decodeCompressedText() {
@@ -224,15 +300,10 @@ void Huffman::decodeCompressedText() {
 void Huffman::writeUncompressedText() {
 }
 
-void Huffman::encode() {
-	buildFrequencyTable();
-	buildPrefixFreeTree();
-	ofstream outStream(mOutFile, ios::out|ios::binary);
-	writePrefixFreeTree(mRoot, outStream);
-	writeCompressedText(outStream);
-}
-
 void Huffman::decode() {
+	ifstream inStream(mInFile, ios::in|ios::binary);    
+	readPrefixFreeTree(inStream);
+	ofstream outStream(mOutFile, ios::out|ios::binary);
 }
 
 int main(int argc, char** argv) {
