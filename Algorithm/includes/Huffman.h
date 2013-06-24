@@ -9,7 +9,7 @@ using namespace std;
 
 #define NUMCHARS 256 
 struct FreqInfo {
-	char codePoint;
+	unsigned char codePoint;
 	bool* bitField;
 	int fieldLength;
 	int freq;
@@ -75,7 +75,8 @@ private:
 	void buildPrefixFreeTree();
 	void writePrefixFreeTree(FreqInfo*, ofstream&);
 	void writeCompressedText(ofstream&);
-	void binaryToPrefixFreeTree();
+	void readPrefixFreeTree(ifstream&);
+	void parsePrefixFreeTree(FreqInfo*, ifstream&);
 	void decodeCompressedText();
 	void writeUncompressedText();
 public:
