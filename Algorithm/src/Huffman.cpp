@@ -1,63 +1,63 @@
 #include "Huffman.h"
 
 // output buffer
-static char buffer;
+static unsigned char outBuffer;
 // current buffer content size
 // flush when we have one byte of data
-static int bufferSize = 0;
+static int outBufferSize = 0;
+
+// input buffer
+static unsigned char inBuffer;
+static int inBufferSize = 0;
 // the bit field to represent huffman code
 static bool bitField[NUMCHARS];
 // length of the huffman code
 static int fieldLength = 0;
 
 void flushBuffer(ofstream &stream) {
-	if (bufferSize != 0) {
-		int toFlush = 8 - bufferSize;
-		buffer = buffer<<toFlush;
-		stream.put(buffer);
+	if (outBufferSize != 0) {
+		stream.put(outBuffer);
 	}
 }
 // keep appending to buffer till we have enough
 // to flush a byte
 void writeBit(ofstream &stream, bool bit) {
-	buffer = buffer<<1|bit;
-	if (++bufferSize == 8) {
-		stream.put(buffer);
-		bufferSize = 0;
-		buffer = 0;
+	outBuffer = outBuffer|bit<<outBufferSize;
+	if (++outBufferSize == 8) {
+		stream.put((char&)outBuffer);
+		outBufferSize = 0;
+		outBuffer = 0;
 	}
 }
 
-// output huffman code length before the actual code
+// output the code point 
 void writeByte(ofstream &stream, unsigned char codePoint) {
-	if (bufferSize != 0) {
-		int toFlush = 8 - bufferSize;
-		buffer = buffer<<toFlush|codePoint>>bufferSize;
-		stream.put(buffer);
-		// msd toFlush bits will be ignored
-		buffer = codePoint;
+	if (outBufferSize != 0) {
+		outBuffer = outBuffer|codePoint<<outBufferSize;
+		stream.put((char&)outBuffer);
+		outBuffer = codePoint>>(8 - outBufferSize);
 	}
-	else stream.put(codePoint);
+	else stream.put((char&)codePoint);
 }
 
 bool readBit(ifstream &stream) {
-	if (bufferSize == 0) {
-		stream.get(buffer);
-		bufferSize = 8;
+	if (inBufferSize == 0) {
+		stream.get((char&)inBuffer);
+		inBufferSize = 8;
 	}
-	int mask = 1<<(bufferSize - 1);
-	bufferSize--;
-	return buffer&mask;
+	int mask = 1<<(8 - inBufferSize);
+	inBufferSize--;
+	return inBuffer&mask;
 }
 
 unsigned char readByte(ifstream &stream) {
 	unsigned char byte;
-	if (bufferSize != 0) {
-		byte = buffer<<(8 - bufferSize);
-		stream.get(buffer);
-		byte = byte|buffer>>bufferSize;
+	if (inBufferSize != 0) {
+		byte = inBuffer>>(8 - inBufferSize);
+		stream.get((char&)inBuffer);
+		byte = byte|inBuffer<<inBufferSize;
 	} 
-	stream.get((char&)byte);
+	else stream.get((char&)byte);
 	return byte;
 }
  
@@ -87,6 +87,10 @@ void Huffman::threeWayQuickSort(FreqInfo** inArray, int left, int right) {
 	threeWayQuickSort(inArray, left, j - 1);
 	threeWayQuickSort(inArray, k + 1, right);
 }
+
+/*************************/
+/** Compression methods **/
+/*************************/
 
 void Huffman::buildFrequencyTable() {
 	ifstream stream(mInFile, ios::in|ios::binary);    
@@ -242,15 +246,11 @@ void Huffman::writeCompressedText(ofstream& outStream) {
 	inStream.close();
 }
 
-void Huffman::encode() {
-	buildFrequencyTable();
-	buildPrefixFreeTree();
-	ofstream stream(mOutFile, ios::out|ios::binary);
-	writePrefixFreeTree(mRoot, stream);
-	writeCompressedText(stream);
-	flushBuffer(stream);
-}
+/***************************/
+/** Decompression methods **/
+/***************************/
 
+// read in the prefix free tree from file to be decoded
 void Huffman::readPrefixFreeTree(ifstream &stream) {
 	if(stream.eof()) {
 		cout<<"EOF reached"<<endl;
@@ -268,8 +268,10 @@ void Huffman::readPrefixFreeTree(ifstream &stream) {
 	parsePrefixFreeTree(mRoot, stream);
 }
 
+// do a post order traversal and regenerate the prefix free tree
 void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
 	bool current = readBit(stream);
+	// leaf node
 	if (current) {
 		root->codePoint = readByte(stream);
 		cout<<"Code Point "<<(int)root->codePoint<<"\t";
@@ -283,7 +285,7 @@ void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
 		}
 		cout<<endl;
 	}
-	else {
+	else { // non leaf
 		root->left = new FreqInfo;
 		root->right = new FreqInfo;
 		bitField[fieldLength++] = false;
@@ -294,16 +296,50 @@ void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
 	fieldLength--;
 }
 
-void Huffman::decodeCompressedText() {
+// Go through the remaining file and regenerate the original
+// characters.
+// TODO: extra characters getting added to decompressed file.
+void Huffman::decodeCompressedText(ifstream& inStream) {
+	FreqInfo* current = mRoot;
+	ofstream outStream(mOutFile, ios::out|ios::binary);
+	while(inStream.good()) {
+		if (current->left == NULL) {
+			cout<<"Writing "<<current->codePoint<<endl;
+			writeByte(outStream, current->codePoint);
+			current = mRoot;
+		}
+		else {
+			if (readBit(inStream)) {
+				current = current->right;
+			}
+			else {
+				current = current->left;
+			}
+		}
+	}
+	outStream.close();
 }
 
-void Huffman::writeUncompressedText() {
+/*******************/
+/** Public methods */
+/*******************/
+
+void Huffman::encode() {
+	buildFrequencyTable();
+	buildPrefixFreeTree();
+	ofstream stream(mOutFile, ios::out|ios::binary);
+	writePrefixFreeTree(mRoot, stream);
+	writeCompressedText(stream);
+	// align to byte
+	flushBuffer(stream);
+	stream.close();
 }
 
 void Huffman::decode() {
 	ifstream inStream(mInFile, ios::in|ios::binary);    
 	readPrefixFreeTree(inStream);
-	ofstream outStream(mOutFile, ios::out|ios::binary);
+	decodeCompressedText(inStream);
+	inStream.close();
 }
 
 int main(int argc, char** argv) {
