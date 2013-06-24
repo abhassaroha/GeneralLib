@@ -77,8 +77,7 @@ private:
 	void writeCompressedText(ofstream&);
 	void readPrefixFreeTree(ifstream&);
 	void parsePrefixFreeTree(FreqInfo*, ifstream&);
-	void decodeCompressedText();
-	void writeUncompressedText();
+	void decodeCompressedText(ifstream&);
 public:
 	Huffman(char* inFile, char* outFile) {
 		mInFile = inFile;
