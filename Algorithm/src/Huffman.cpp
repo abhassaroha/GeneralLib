@@ -14,9 +14,13 @@ static bool bitField[NUMCHARS];
 // length of the huffman code
 static int fieldLength = 0;
 
+static unsigned int inBytes = 0;
+static unsigned int outBytes = 0;
+
 void flushBuffer(ofstream &stream) {
 	if (outBufferSize != 0) {
 		stream.put(outBuffer);
+		outBytes++;
 	}
 }
 // keep appending to buffer till we have enough
@@ -25,6 +29,7 @@ void writeBit(ofstream &stream, bool bit) {
 	outBuffer = outBuffer|bit<<outBufferSize;
 	if (++outBufferSize == 8) {
 		stream.put((char&)outBuffer);
+		outBytes++;
 		outBufferSize = 0;
 		outBuffer = 0;
 	}
@@ -35,14 +40,19 @@ void writeByte(ofstream &stream, unsigned char codePoint) {
 	if (outBufferSize != 0) {
 		outBuffer = outBuffer|codePoint<<outBufferSize;
 		stream.put((char&)outBuffer);
+		outBytes++;
 		outBuffer = codePoint>>(8 - outBufferSize);
 	}
-	else stream.put((char&)codePoint);
+	else {
+		stream.put((char&)codePoint);
+		outBytes++;
+	}
 }
 
 bool readBit(ifstream &stream) {
 	if (inBufferSize == 0) {
 		stream.get((char&)inBuffer);
+		inBytes++;
 		inBufferSize = 8;
 	}
 	int mask = 1<<(8 - inBufferSize);
@@ -55,17 +65,51 @@ unsigned char readByte(ifstream &stream) {
 	if (inBufferSize != 0) {
 		byte = inBuffer>>(8 - inBufferSize);
 		stream.get((char&)inBuffer);
+		inBytes++;
 		byte = byte|inBuffer<<inBufferSize;
 	} 
-	else stream.get((char&)byte);
+	else {
+		stream.get((char&)byte);
+		inBytes++;
+	}
 	return byte;
 }
+
+void writeCharCount(ofstream &stream, unsigned int charCount) {
+	stream.put((char)charCount);
+	charCount>>=8;
+	stream.put((char)charCount);
+	charCount>>=8;
+	stream.put((char)charCount);
+	charCount>>=8;
+	// write character count to prevent buffer byte from being decoded
+	// its the first word in outputted file
+	stream.put((char)charCount);
+}
+
+unsigned int readCharCount(ifstream &stream) {
+	unsigned int charCount;
+	char byte;
+	// read character count to prevent last byte from being decoded
+	// its the first word in outputted file
+	stream.get(byte);
+	charCount = byte;
+	stream.get(byte);
+	charCount|=byte<<8;
+	stream.get(byte);
+	charCount|=byte<<16;
+	stream.get(byte);
+	charCount|=byte<<24;
+	return charCount;
+}
  
+#ifdef DEBUG
 void printFreqTable(FreqInfo** freqTable) {
 	for (int i = 0; i < NUMCHARS; i++) {
 			cout<<freqTable[i]->codePoint<<"\t"<<freqTable[i]->freq<<endl;
 	}
 }
+#endif
 
 void swap(FreqInfo** source, int a, int b) {
 	FreqInfo* temp = source[a];
@@ -92,8 +136,9 @@ void Huffman::threeWayQuickSort(FreqInfo** inArray, int left, int right) {
 /** Compression methods **/
 /*************************/
 
-void Huffman::buildFrequencyTable() {
+unsigned int Huffman::buildFrequencyTable() {
 	ifstream stream(mInFile, ios::in|ios::binary);    
+	unsigned int charCount = 0;
 	if(stream.eof()) {
 		cout<<"EOF reached"<<endl;
 		exit(EXIT_FAILURE);
@@ -113,11 +158,14 @@ void Huffman::buildFrequencyTable() {
 		freqTable[i] = new FreqInfo;
 		freqTable[i]->codePoint = (unsigned char) i;
 	} 
+	stream.get(current);
 	while (stream.good()) {
-		stream.get(current);
 		freqTable[current]->freq++;
+		charCount++;
+		stream.get(current);
 	}
 	stream.close();
+	return charCount;
 }
 
 #define CREATE_ROOT() \
@@ -193,17 +241,13 @@ void Huffman::writePrefixFreeTree(FreqInfo* root, ofstream& stream) {
 		// leaf node
 		writeBit(stream, true);
 		// write length of huffman code
-		cout<<"Code Point "<<(int)root->codePoint<<"\t";
 		writeByte(stream, root->codePoint);
 		root->fieldLength = fieldLength; 
 		root->bitField = new bool[fieldLength];
-		cout<<"Code ";
 		// write the huffman code
 		for (int i = 0; i < fieldLength; i++) {
-			cout<<bitField[i];
 			root->bitField[i] = bitField[i];
 		}
-		cout<<endl;
 	}
 	else {
 		// non-leaf node
@@ -238,6 +282,7 @@ void Huffman::writeCompressedText(ofstream& outStream) {
 	FreqInfo* node;
 	while (inStream.good()) {
 		inStream.get(current);
+		inBytes++;
 		node = freqTable[current];
 		for (int i = 0; i < node->fieldLength; i++) {
 			writeBit(outStream, node->bitField[i]);
@@ -274,16 +319,12 @@ void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
 	// leaf node
 	if (current) {
 		root->codePoint = readByte(stream);
-		cout<<"Code Point "<<(int)root->codePoint<<"\t";
 		root->fieldLength = fieldLength; 
 		root->bitField = new bool[fieldLength];
-		cout<<"Code ";
 		// write the huffman code
 		for (int i = 0; i < fieldLength; i++) {
-			cout<<bitField[i];
 			root->bitField[i] = bitField[i];
 		}
-		cout<<endl;
 	}
 	else { // non leaf
 		root->left = new FreqInfo;
@@ -298,14 +339,13 @@ void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
 
 // Go through the remaining file and regenerate the original
 // characters.
-// TODO: extra characters getting added to decompressed file.
-void Huffman::decodeCompressedText(ifstream& inStream) {
+void Huffman::decodeCompressedText(ifstream& inStream, unsigned int charCount) {
 	FreqInfo* current = mRoot;
 	ofstream outStream(mOutFile, ios::out|ios::binary);
-	while(inStream.good()) {
+	while(inStream.good() && charCount > 0) {
 		if (current->left == NULL) {
-			cout<<"Writing "<<current->codePoint<<endl;
 			writeByte(outStream, current->codePoint);
+			charCount--;
 			current = mRoot;
 		}
 		else {
@@ -325,21 +365,25 @@ void Huffman::decodeCompressedText(ifstream& inStream) {
 /*******************/
 
 void Huffman::encode() {
-	buildFrequencyTable();
-	buildPrefixFreeTree();
+	unsigned int charCount = buildFrequencyTable();
 	ofstream stream(mOutFile, ios::out|ios::binary);
+	writeCharCount(stream, charCount);
+	buildPrefixFreeTree();
 	writePrefixFreeTree(mRoot, stream);
 	writeCompressedText(stream);
 	// align to byte
 	flushBuffer(stream);
 	stream.close();
+	cout<<"Read bytes "<<inBytes<<"\tWrote bytes "<<outBytes<<endl;
 }
 
 void Huffman::decode() {
 	ifstream inStream(mInFile, ios::in|ios::binary);    
+	unsigned int charCount = readCharCount(inStream);
 	readPrefixFreeTree(inStream);
-	decodeCompressedText(inStream);
+	decodeCompressedText(inStream, charCount);
 	inStream.close();
+	cout<<"Read bytes "<<inBytes<<"\tWrote bytes "<<outBytes<<endl;
 }
 
 int main(int argc, char** argv) {
