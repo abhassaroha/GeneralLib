@@ -71,13 +71,13 @@ private:
 	FreqInfo* mRoot;
 	FreqInfo** freqTable;
 	void threeWayQuickSort(FreqInfo**, int, int);
-	void buildFrequencyTable();
+	unsigned int buildFrequencyTable();
 	void buildPrefixFreeTree();
 	void writePrefixFreeTree(FreqInfo*, ofstream&);
 	void writeCompressedText(ofstream&);
 	void readPrefixFreeTree(ifstream&);
 	void parsePrefixFreeTree(FreqInfo*, ifstream&);
-	void decodeCompressedText(ifstream&);
+	void decodeCompressedText(ifstream&, unsigned int);
 public:
 	Huffman(char* inFile, char* outFile) {
 		mInFile = inFile;
