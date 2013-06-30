@@ -8,3 +8,7 @@ huffman: $(HUFFMAN)
 LISTINTERSECT=./src/ListIntersection.c
 intersect: $(LISTINTERSECT)
 	gcc -Wall $(LISTINTERSECT) -I$(INCLUDE_DIR) -o bin/list_intersect 
+
+LCS=./src/LCS.cpp
+diff: $(LCS)
+	g++ -Wall $(LCS) -I$(INCLUDE_DIR) -o bin/diff
