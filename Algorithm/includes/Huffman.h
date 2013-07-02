@@ -4,70 +4,20 @@
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
+#include "FreqInfo.h"
+#include "Queue.h"
 
 using namespace std;
 
 #define NUMCHARS 256 
-struct FreqInfo {
-	unsigned char codePoint;
-	bool* bitField;
-	int fieldLength;
-	int freq;
-	FreqInfo* left;
-	FreqInfo* right;
-	FreqInfo() {
-		freq = 0;
-		left = NULL;
-		right = NULL;
-		bitField = NULL;
-	}
-};
-
-// Queue with assumption that we will never
-// overflow and underflow.
-class Queue {
-private:
-	FreqInfo** mArray;
-	int mLeft;
-	int mRight;
-public:
-	Queue(FreqInfo** array, int left, int right = -1):
-		mArray(array), mLeft(left), mRight(right) {};
-
-	FreqInfo* pop() {
-		FreqInfo* result = NULL;
-		if (this->good()) {
-			result = mArray[mLeft];
-			mLeft++;
-		}
-		return result;
-	};
-
-	void push(FreqInfo* elem) {
-		mArray[++mRight] = elem;
-	};
-
-	FreqInfo* peek() {
-		FreqInfo* result = NULL;
-		result = mArray[mLeft];
-		return result;
-	};
-
-	bool good() {
-		return (mLeft <= mRight);
-	};
-
-	int size() {
-		int result = mRight - mLeft + 1;
-		if (result < 0) result = 0;
-		return result;
-	}
-};
-
 class Huffman {
 private:
-	char* mInFile;
-	char* mOutFile;
+	int fieldLength = 0; // length of the huffman code
+	bool bitField[NUMCHARS]; // the bit field to represent huffman code
+	unsigned int inBytes = 0; // field for read, write stats
+	unsigned int outBytes = 0;
+	FileBufferReader* mFileReader;
+	FileBufferWriter* mFileWriter;
 	FreqInfo* mRoot;
 	FreqInfo** freqTable;
 	void threeWayQuickSort(FreqInfo**, int, int);
@@ -80,8 +30,8 @@ private:
 	void decodeCompressedText(ifstream&, unsigned int);
 public:
 	Huffman(char* inFile, char* outFile) {
-		mInFile = inFile;
-		mOutFile = outFile;
+		mFileReader = new FileReader(inFile);
+		mFileWriter = new FileWriter(outFile);
 	}
 	void encode();
 	void decode();

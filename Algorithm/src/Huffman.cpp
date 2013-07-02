@@ -1,87 +1,16 @@
 #include "Huffman.h"
 
-// output buffer
-static unsigned char outBuffer;
-// current buffer content size
-// flush when we have one byte of data
-static int outBufferSize = 0;
-
-// input buffer
-static unsigned char inBuffer;
-static int inBufferSize = 0;
-// the bit field to represent huffman code
-static bool bitField[NUMCHARS];
-// length of the huffman code
-static int fieldLength = 0;
-
-static unsigned int inBytes = 0;
-static unsigned int outBytes = 0;
-
-void flushBuffer(ofstream &stream) {
-	if (outBufferSize != 0) {
-		stream.put(outBuffer);
-		outBytes++;
-	}
-}
-// keep appending to buffer till we have enough
-// to flush a byte
-void writeBit(ofstream &stream, bool bit) {
-	outBuffer = outBuffer|bit<<outBufferSize;
-	if (++outBufferSize == 8) {
-		stream.put((char&)outBuffer);
-		outBytes++;
-		outBufferSize = 0;
-		outBuffer = 0;
-	}
-}
-
-// output the code point 
-void writeByte(ofstream &stream, unsigned char codePoint) {
-	if (outBufferSize != 0) {
-		outBuffer = outBuffer|codePoint<<outBufferSize;
-		stream.put((char&)outBuffer);
-		outBytes++;
-		outBuffer = codePoint>>(8 - outBufferSize);
-	}
-	else {
-		stream.put((char&)codePoint);
-		outBytes++;
-	}
-}
-
-bool readBit(ifstream &stream) {
-	if (inBufferSize == 0) {
-		stream.get((char&)inBuffer);
-		inBytes++;
-		inBufferSize = 8;
-	}
-	int mask = 1<<(8 - inBufferSize);
-	inBufferSize--;
-	return inBuffer&mask;
-}
-
-unsigned char readByte(ifstream &stream) {
-	unsigned char byte;
-	if (inBufferSize != 0) {
-		byte = inBuffer>>(8 - inBufferSize);
-		stream.get((char&)inBuffer);
-		inBytes++;
-		byte = byte|inBuffer<<inBufferSize;
-	} 
-	else {
-		stream.get((char&)byte);
-		inBytes++;
-	}
-	return byte;
-}
+// in bytes 
+#define BUFFER_SIZE	8
+#define BYTE_SIZE 8
 
 void writeCharCount(ofstream &stream, unsigned int charCount) {
 	stream.put((char)charCount);
-	charCount>>=8;
+	charCount>>=BYTE_SIZE;
 	stream.put((char)charCount);
-	charCount>>=8;
+	charCount>>=BYTE_SIZE;
 	stream.put((char)charCount);
-	charCount>>=8;
+	charCount>>=BYTE_SIZE;
 	// write character count to prevent buffer byte from being decoded
 	// its the first word in outputted file
 	stream.put((char)charCount);
@@ -137,7 +66,6 @@ void Huffman::threeWayQuickSort(FreqInfo** inArray, int left, int right) {
 /*************************/
 
 unsigned int Huffman::buildFrequencyTable() {
-	ifstream stream(mInFile, ios::in|ios::binary);    
 	unsigned int charCount = 0;
 	if(stream.eof()) {
 		cout<<"EOF reached"<<endl;
@@ -236,7 +164,7 @@ void Huffman::buildPrefixFreeTree() {
 }
 
 // Post order traversal of the prefix tree
-void Huffman::writePrefixFreeTree(FreqInfo* root, ofstream& stream) {
+void Huffman::writePrefixFreeTree(FreqInfo* root) {
 	if (root->left == NULL) {
 		// leaf node
 		writeBit(stream, true);
@@ -263,8 +191,7 @@ void Huffman::writePrefixFreeTree(FreqInfo* root, ofstream& stream) {
 	fieldLength--;
 }
 
-void Huffman::writeCompressedText(ofstream& outStream) {
-	ifstream inStream(mInFile, ios::in|ios::binary);    
+void Huffman::writeCompressedText() {
 	if(inStream.eof()) {
 		cout<<"EOF reached"<<endl;
 		exit(EXIT_FAILURE);
@@ -282,7 +209,6 @@ void Huffman::writeCompressedText(ofstream& outStream) {
 	FreqInfo* node;
 	while (inStream.good()) {
 		inStream.get(current);
-		inBytes++;
 		node = freqTable[current];
 		for (int i = 0; i < node->fieldLength; i++) {
 			writeBit(outStream, node->bitField[i]);
@@ -296,7 +222,7 @@ void Huffman::writeCompressedText(ofstream& outStream) {
 /***************************/
 
 // read in the prefix free tree from file to be decoded
-void Huffman::readPrefixFreeTree(ifstream &stream) {
+void Huffman::readPrefixFreeTree() {
 	if(stream.eof()) {
 		cout<<"EOF reached"<<endl;
 		exit(EXIT_FAILURE);
@@ -314,7 +240,7 @@ void Huffman::readPrefixFreeTree(ifstream &stream) {
 }
 
 // do a post order traversal and regenerate the prefix free tree
-void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
+void Huffman::parsePrefixFreeTree(FreqInfo* root) {
 	bool current = readBit(stream);
 	// leaf node
 	if (current) {
@@ -339,10 +265,9 @@ void Huffman::parsePrefixFreeTree(FreqInfo* root, ifstream& stream) {
 
 // Go through the remaining file and regenerate the original
 // characters.
-void Huffman::decodeCompressedText(ifstream& inStream, unsigned int charCount) {
+void Huffman::decodeCompressedText(unsigned int charCount) {
 	FreqInfo* current = mRoot;
-	ofstream outStream(mOutFile, ios::out|ios::binary);
-	while(inStream.good() && charCount > 0) {
+	while(charCount > 0) {
 		if (current->left == NULL) {
 			writeByte(outStream, current->codePoint);
 			charCount--;
@@ -366,7 +291,6 @@ void Huffman::decodeCompressedText(ifstream& inStream, unsigned int charCount) {
 
 void Huffman::encode() {
 	unsigned int charCount = buildFrequencyTable();
-	ofstream stream(mOutFile, ios::out|ios::binary);
 	writeCharCount(stream, charCount);
 	buildPrefixFreeTree();
 	writePrefixFreeTree(mRoot, stream);
@@ -378,7 +302,6 @@ void Huffman::encode() {
 }
 
 void Huffman::decode() {
-	ifstream inStream(mInFile, ios::in|ios::binary);    
 	unsigned int charCount = readCharCount(inStream);
 	readPrefixFreeTree(inStream);
 	decodeCompressedText(inStream, charCount);
