@@ -1,7 +1,7 @@
 INCLUDE_DIR=./includes/
 all: *
 
-HUFFMAN=./src/Huffman.cpp
+HUFFMAN=./src/Huffman.cpp ./src/FileBufferReader.cpp ./src/FileBufferWriter.cpp
 huffman: $(HUFFMAN)
 	g++ -Wall $(HUFFMAN) -I$(INCLUDE_DIR) -o bin/huffman
 

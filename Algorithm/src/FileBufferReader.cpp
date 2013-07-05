@@ -1,67 +1,103 @@
 #include "FileBufferReader.h"
 
-#define CURRENT_BYTE(index) \
-	(index/BYTE_SIZE)
-#define CURRENT_BIT(index) \
-	(index%BYTE_SIZE)
-
-bool FileBufferReader::isGood() {
-	return mStream.good() || mBufferIndex < readBytes*BYTE_SIZE;
+void FileBufferReader::open() {
+	mStream.open(mFileName, ios::binary|ios::in);
 }
 
-bool FileBufferReader::readBit() {
+void FileBufferReader::close() {
+	mStream.close();	
+}
+
+bool FileBufferReader::good() {
+	return mStream.good() || mBufferIndex < mReadBytes*BYTE_SIZE;
+}
+
+bool FileBufferReader::fail() {
+	return mStream.fail();
+}
+
+bool FileBufferReader::bad() {
+	return mStream.bad();
+}
+
+bool FileBufferReader::eof() {
+	return mStream.eof();
+}
+
+void FileBufferReader::readBit(bool& bit) {
 	char byte;
-	if (mBufferIndex == readBytes*BYTE_SIZE) {
+	if (mBufferIndex == mReadBytes*BYTE_SIZE) {
 		if (mStream.good()) {
 			mStream.read(mBuffer, BUFFER_SIZE);
-			readBytes = mStream.gcount();
+			mReadBytes = mStream.gcount();
 			mBufferIndex = 0;
 		}
 		else  {
-			readBytes = 0;
+			mReadBytes = 0;
 			mBufferIndex = 0;
-			return 0;
+			return;
 		}
 	}
 	int mask = 1<<CURRENT_BIT(mBufferIndex);
 	byte = mBuffer[CURRENT_BYTE(mBufferIndex)];
 	mBufferIndex++;
-	return byte&mask;
+	bit = byte&mask;
 }
 
-char FileBufferReader::readByte() {
-	unsigned char byte = 0;
-	// buffer has not reached end
-	if (mBufferIndex != readBytes*BYTE_SIZE) {
-		byte = (unsigned char) mBuffer[CURRENT_BYTE(mBufferIndex)];
-		byte = byte>>CURRENT_BIT(mBufferIndex);
-		mBufferIndex += BYTE_SIZE - CURRENT_BIT(mBufferIndex);
-		if (mBufferIndex == readBytes*BYTE_SIZE) {
-			if (mStream.good()) {
-				mStream.read(mBuffer, BUFFER_SIZE);
-				mBufferIndex = 0;
-				readBytes = mStream.gcount();
-				byte = byte|mBuffer[mBufferIndex/BYTE_SIZE]<<BYTE_SIZE - mBufferIndex%BYTE_SIZE;
-			}
-			else {
-				readBytes = 0;
-				mBufferIndex = 0;
-			}
-		}
-		else {
-		}
-	} 
-	else { // buffer reached end, read more from file
+void FileBufferReader::readByte(char& byte) {
+	byte = 0;
+	int currentBit;
+	// buffer reached end, read more from file
+	if (mBufferIndex == mReadBytes*BYTE_SIZE) {
 		if (mStream.good()) {
 			mStream.read(mBuffer, BUFFER_SIZE);
 			mBufferIndex = 0;
-			readBytes = mStream.gcount();
-			if (readBytes != 0) byte = mBuffer[0];
+			mReadBytes = mStream.gcount();
+			if (mReadBytes != 0) {
+				byte = mBuffer[0];
+				mBufferIndex += BYTE_SIZE;
+			}
 		}
 		else {
-			readBytes = 0;
+			mReadBytes = 0;
 			mBufferIndex = 0;
 		}
+	} 
+	else { // buffer has not reached end 
+		byte = (unsigned char) mBuffer[CURRENT_BYTE(mBufferIndex)];
+		currentBit = CURRENT_BIT(mBufferIndex);
+		byte = ((unsigned char)byte)>>currentBit;
+		mBufferIndex += BYTE_SIZE - currentBit;
+		if (mBufferIndex == mReadBytes*BYTE_SIZE) {
+			if (mStream.good()) {
+				mStream.read(mBuffer, BUFFER_SIZE);
+				mBufferIndex = 0;
+				mReadBytes = mStream.gcount();
+				// not casting as left shift of signed and unsigned 
+				// are equivalent
+				byte = byte|mBuffer[0]<<(BYTE_SIZE - currentBit);
+			}
+			else {
+				mReadBytes = 0;
+				mBufferIndex = 0;
+			}
+		}
+		else {
+			// not casting as left shift of signed and unsigned 
+			// are equivalent
+			byte = byte|mBuffer[CURRENT_BYTE(mBufferIndex)]<<(BYTE_SIZE - currentBit);
+		}
 	}
-	return byte;
+}
+
+void FileBufferReader::readInt(int& result) {
+	char byte; 
+	readByte(byte);
+	result = byte;
+	readByte(byte);
+	result = byte<<BYTE_SIZE|result;
+	readByte(byte);
+	result = byte<<2*BYTE_SIZE|result;
+	readByte(byte);
+	result = byte<<3*BYTE_SIZE|result;
 }
