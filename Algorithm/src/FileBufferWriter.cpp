@@ -1,6 +1,5 @@
 #include "FileBufferWriter.h"
-#include <iostream>
-using namespace std;
+
 void FileBufferWriter::open() {
 	mBufferIndex = 0;
 	mOutBytes = 0;
