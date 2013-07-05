@@ -6,16 +6,18 @@
 #include <stdlib.h>
 #include "FreqInfo.h"
 #include "Queue.h"
+#include "FileBufferReader.h"
+#include "FileBufferWriter.h"
 
 using namespace std;
 
 #define NUMCHARS 256 
 class Huffman {
 private:
-	int fieldLength = 0; // length of the huffman code
+	int fieldLength; // length of the huffman code
 	bool bitField[NUMCHARS]; // the bit field to represent huffman code
-	unsigned int inBytes = 0; // field for read, write stats
-	unsigned int outBytes = 0;
+	unsigned int inBytes; // field for read, write stats
+	unsigned int outBytes;
 	FileBufferReader* mFileReader;
 	FileBufferWriter* mFileWriter;
 	FreqInfo* mRoot;
@@ -23,15 +25,18 @@ private:
 	void threeWayQuickSort(FreqInfo**, int, int);
 	unsigned int buildFrequencyTable();
 	void buildPrefixFreeTree();
-	void writePrefixFreeTree(FreqInfo*, ofstream&);
-	void writeCompressedText(ofstream&);
-	void readPrefixFreeTree(ifstream&);
-	void parsePrefixFreeTree(FreqInfo*, ifstream&);
-	void decodeCompressedText(ifstream&, unsigned int);
+	void writePrefixFreeTree(FreqInfo*);
+	void writeCompressedText();
+	void readPrefixFreeTree();
+	void parsePrefixFreeTree(FreqInfo*);
+	void decodeCompressedText(int);
 public:
 	Huffman(char* inFile, char* outFile) {
-		mFileReader = new FileReader(inFile);
-		mFileWriter = new FileWriter(outFile);
+		fieldLength = 0;
+		inBytes = 0;
+		outBytes = 0;
+		mFileReader = new FileBufferReader(inFile);
+		mFileWriter = new FileBufferWriter(outFile);
 	}
 	void encode();
 	void decode();

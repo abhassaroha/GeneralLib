@@ -1,23 +1,30 @@
 #include "FileBufferWriter.h"
 
-#define CURRENT_BYTE(index) \
-	(index/BYTE_SIZE)
-#define CURRENT_BIT(index) \
-	(index%BYTE_SIZE)
+void FileBufferWriter::open() {
+	mStream.open(mFileName, ios::binary|ios::out);	
+}
+
+void FileBufferWriter::close() {
+	flushBuffer();
+	mStream.close();	
+}
 
 void FileBufferWriter::flushBuffer() {
-	if (outBufferIndex != 0) {
-		mStream.write(outBuffer, CURRENT_BYTE(outBufferIndex) + 1);
-		outBufferIndex = 0;
+	if (mBufferIndex != 0) {
+		mStream.write(mBuffer, CURRENT_BYTE(mBufferIndex) + 1);
+		mBufferIndex = 0;
 	}
 }
+
 // keep appending to buffer till we have enough
 // to flush it 
 void FileBufferWriter::writeBit(bool bit) {
-	char byte = outBuffer[CURRENT_BYTE(outBufferIndex)];
-	if (CURRENT_BIT(outBufferIndex) == 0) byte = 0;
-	byte = byte|bit<<CURRENT_BIT(outBufferIndex);
-	if (++outBufferIndex == BUFFER_SIZE*BYTE_SIZE) {
+	char byte = mBuffer[CURRENT_BYTE(mBufferIndex)];
+	if (CURRENT_BIT(mBufferIndex) == 0) byte = 0;
+	// not casting as left shift of signed and unsigned 
+	// are equivalent
+	byte = byte|bit<<CURRENT_BIT(mBufferIndex);
+	if (++mBufferIndex == BUFFER_SIZE*BYTE_SIZE) {
 		flushBuffer();
 	}
 }
@@ -25,23 +32,32 @@ void FileBufferWriter::writeBit(bool bit) {
 // output the code point 
 void FileBufferWriter::writeByte(unsigned char codePoint) {
 	char byte;
-	int currentBit = CURRENT_BIT(outBufferIndex);
-	// incoming byte has to be split across two buffer bytes
-	if (currentBit != 0) {
-		byte = outBuffer[CURRENT_BYTE(outBufferIndex)];
+	int currentBit = CURRENT_BIT(mBufferIndex);
+	if (currentBit == 0) {
+		mBuffer[CURRENT_BYTE(mBufferIndex)] = codePoint;	
+		mBufferIndex += BYTE_SIZE;
+		if (mBufferIndex == BUFFER_SIZE*BYTE_SIZE) {
+			flushBuffer();
+		}
+	}
+	else { // incoming byte has to be split across two buffer bytes
+		byte = mBuffer[CURRENT_BYTE(mBufferIndex)];
 		byte = byte|codePoint<<currentBit;
-		outBufferIndex += BYTE_SIZE - currentBit;
-		if (outBufferIndex == BUFFER_SIZE*BYTE_SIZE) {
+		mBufferIndex += BYTE_SIZE - currentBit;
+		if (mBufferIndex == BUFFER_SIZE*BYTE_SIZE) {
 			flushBuffer();
 		}
-		outBuffer[CURRENT_BYTE(outBufferIndex)] = codePoint>>(BYTE_SIZE - currentBit);
-		outBufferIndex += currentBit;
+		mBuffer[CURRENT_BYTE(mBufferIndex)] = codePoint>>(BYTE_SIZE - currentBit);
+		mBufferIndex += currentBit;
 	}
-	else {
-		outBuffer[CURRENT_BYTE(outBufferIndex)] = codePoint;	
-		outBufferIndex += BYTE_SIZE;
-		if (outBufferIndex == BUFFER_SIZE*BYTE_SIZE) {
-			flushBuffer();
-		}
-	}
+}
+
+void FileBufferWriter::writeInt(int value) {
+	writeByte((unsigned char) value);
+	value = value>>BYTE_SIZE;
+	writeByte((unsigned char) value);
+	value = value>>BYTE_SIZE;
+	writeByte((unsigned char) value);
+	value = value>>BYTE_SIZE;
+	writeByte((unsigned char) value);
 }
