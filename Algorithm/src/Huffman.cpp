@@ -3,17 +3,33 @@
 #ifdef DEBUG
 void printFreqTable(FreqInfo** freqTable) {
 	for (int i = 0; i < NUMCHARS; i++) {
-			cout<<freqTable[i]->codePoint<<"\t"<<freqTable[i]->freq<<endl;
+		cout<<freqTable[i]->codePoint<<"\t"<<freqTable[i]->freq<<endl;
 	}
 }
 #endif
 
-void swap(FreqInfo** source, int a, int b) {
+void Huffman::swap(FreqInfo** source, int a, int b) {
 	FreqInfo* temp = source[a];
 	source[a] = source[b];
 	source[b] = temp;
 }
 
+void Huffman::checkStreamIsGood() {
+	if (!mFileReader->good()) {
+		if(mFileReader->eof()) {
+			cout<<"EOF reached"<<endl;
+			exit(EXIT_FAILURE);
+		}
+		else if (mFileReader->bad()) {
+			cout<<"Bad bit set"<<endl;
+			exit(EXIT_FAILURE);
+		}
+		else if (mFileReader->fail()) {
+			cout<<"Fail bit set"<<endl;
+			exit(EXIT_FAILURE);
+		}		
+	}
+}
 void Huffman::threeWayQuickSort(FreqInfo** inArray, int left, int right) {
 	if (left >= right) return;
 	int i = left, j = left, k = right;
@@ -33,22 +49,10 @@ void Huffman::threeWayQuickSort(FreqInfo** inArray, int left, int right) {
 /** Compression methods **/
 /*************************/
 
-unsigned int Huffman::buildFrequencyTable() {
+void Huffman::buildFrequencyTable() {
 	unsigned int charCount = 0;
 	mFileReader->open();
-	if(mFileReader->eof()) {
-		cout<<"EOF reached"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (mFileReader->bad()) {
-		cout<<"Bad bit set"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (mFileReader->fail()) {
-		cout<<"Fail bit set"<<endl;
-		exit(EXIT_FAILURE);
-	}
-
+	checkStreamIsGood();
 	char current;
 	freqTable = new FreqInfo*[NUMCHARS]; 
 	for (int i = 0; i < NUMCHARS; i++) {
@@ -62,11 +66,14 @@ unsigned int Huffman::buildFrequencyTable() {
 		mFileReader->readByte(current);
 	}
 	mFileReader->close();
-	return charCount;
+	// open the compressed data target and write char count
+	mFileWriter->open();
+	// cout<<"Char count "<<charCount<<endl;
+	mFileWriter->writeInt(charCount);
 }
 
 #define CREATE_ROOT() \
-	mRoot = new FreqInfo();	\
+mRoot = new FreqInfo();	\
 	mRoot->left = first;		\
 	mRoot->right = second;	\
 	mRoot->freq = first->freq + second->freq;	\
@@ -139,44 +146,31 @@ void Huffman::writePrefixFreeTree(FreqInfo* root) {
 		mFileWriter->writeBit(true);
 		// write length of huffman code
 		mFileWriter->writeByte(root->codePoint);
-		root->fieldLength = fieldLength; 
-		root->bitField = new bool[fieldLength];
+		root->fieldLength = mFieldLength; 
+		root->bitField = new bool[mFieldLength];
 		// write the huffman code
-		for (int i = 0; i < fieldLength; i++) {
-			root->bitField[i] = bitField[i];
+		for (int i = 0; i < mFieldLength; i++) {
+			root->bitField[i] = mBitField[i];
 		}
 	}
 	else {
 		// non-leaf node
 		mFileWriter->writeBit(false);	
-		// fieldLength++ - push stack
-		bitField[fieldLength++] = false;
+		// mFieldLength++ - push stack
+		mBitField[mFieldLength++] = false;
 		writePrefixFreeTree(root->left);
-		// fieldLength++ - push stack
-		bitField[fieldLength++] = true;
+		// mFieldLength++ - push stack
+		mBitField[mFieldLength++] = true;
 		writePrefixFreeTree(root->right);
 	}
 	// pop stack
-	fieldLength--;
+	mFieldLength--;
 }
 
 void Huffman::writeCompressedText() {
-	if(mFileReader->eof()) {
-		cout<<"EOF reached"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (mFileReader->bad()) {
-		cout<<"Bad bit set"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (mFileReader->fail()) {
-		cout<<"Fail bit set"<<endl;
-		exit(EXIT_FAILURE);
-	}
-
+	mFileReader->open();
 	char current;
 	FreqInfo* node;
-	mFileReader->open();
 	mFileReader->readByte(current);
 	while (mFileReader->good()) {
 		node = freqTable[current];
@@ -192,23 +186,16 @@ void Huffman::writeCompressedText() {
 /***************************/
 /** Decompression methods **/
 /***************************/
+// TODO: handle case of corrupt compressed input files.
 
 // read in the prefix free tree from file to be decoded
-void Huffman::readPrefixFreeTree() {
-	if(mFileReader->eof()) {
-		cout<<"EOF reached"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (mFileReader->bad()) {
-		cout<<"Bad bit set"<<endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (mFileReader->fail()) {
-		cout<<"Fail bit set"<<endl;
-		exit(EXIT_FAILURE);
-	}
+unsigned int Huffman::readPrefixFreeTree() {
 	mRoot = new FreqInfo;
+	unsigned int charCount;
+	mFileReader->open(); 
+	mFileReader->readInt(charCount);
 	parsePrefixFreeTree(mRoot);
+	return charCount;
 }
 
 // do a post order traversal and regenerate the prefix free tree
@@ -217,30 +204,31 @@ void Huffman::parsePrefixFreeTree(FreqInfo* root) {
 	mFileReader->readBit(current);
 	// leaf node
 	if (current) {
-		 mFileReader->readByte((char&)root->codePoint);
-		root->fieldLength = fieldLength; 
-		root->bitField = new bool[fieldLength];
+		mFileReader->readByte((char&)root->codePoint);
+		root->fieldLength = mFieldLength; 
+		root->bitField = new bool[mFieldLength];
 		// write the huffman code
-		for (int i = 0; i < fieldLength; i++) {
-			root->bitField[i] = bitField[i];
+		for (int i = 0; i < mFieldLength; i++) {
+			root->bitField[i] = mBitField[i];
 		}
 	}
 	else { // non leaf
 		root->left = new FreqInfo;
 		root->right = new FreqInfo;
-		bitField[fieldLength++] = false;
+		mBitField[mFieldLength++] = false;
 		parsePrefixFreeTree(root->left);
-		bitField[fieldLength++] = true;
+		mBitField[mFieldLength++] = true;
 		parsePrefixFreeTree(root->right);
 	}
-	fieldLength--;
+	mFieldLength--;
 }
 
 // Go through the remaining file and regenerate the original
 // characters.
-void Huffman::decodeCompressedText(int charCount) {
+void Huffman::decodeCompressedText(unsigned int charCount) {
 	FreqInfo* current = mRoot;
 	bool bit;
+	mFileWriter->open();
 	while(charCount > 0) {
 		if (current->left == NULL) {
 			mFileWriter->writeByte(current->codePoint);
@@ -266,21 +254,24 @@ void Huffman::decodeCompressedText(int charCount) {
 /*******************/
 
 void Huffman::encode() {
-	unsigned int charCount = buildFrequencyTable();
-	mFileWriter->writeInt(charCount);
+	buildFrequencyTable();
 	buildPrefixFreeTree();
 	writePrefixFreeTree(mRoot);
 	writeCompressedText();
-	cout<<"Read bytes "<<inBytes<<"\tWrote bytes "<<outBytes<<endl;
+	int readBytes = mFileReader->readBytes();
+	int wroteBytes = mFileWriter->wroteBytes();
+	cout<<"Read bytes "<<readBytes<<"\tWrote bytes "<<wroteBytes<<endl;
+	cout<<"Compression ratio "<<100.0f*wroteBytes/readBytes<<endl;
 }
 
 void Huffman::decode() {
-	mFileReader->open();
-	int charCount; 
-	mFileReader->readInt(charCount);
-	readPrefixFreeTree();
+	unsigned int charCount = readPrefixFreeTree();
+	// cout<<"Char count "<<charCount<<endl;
 	decodeCompressedText(charCount);
-	cout<<"Read bytes "<<inBytes<<"\tWrote bytes "<<outBytes<<endl;
+	int readBytes = mFileReader->readBytes();
+	int wroteBytes = mFileWriter->wroteBytes();
+	cout<<"Read bytes "<<readBytes<<"\tWrote bytes "<<wroteBytes<<endl;
+	cout<<"Compression ratio "<<100.0f*readBytes/wroteBytes<<endl;
 }
 
 int main(int argc, char** argv) {

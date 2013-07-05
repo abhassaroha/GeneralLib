@@ -14,27 +14,25 @@ using namespace std;
 #define NUMCHARS 256 
 class Huffman {
 private:
-	int fieldLength; // length of the huffman code
-	bool bitField[NUMCHARS]; // the bit field to represent huffman code
-	unsigned int inBytes; // field for read, write stats
-	unsigned int outBytes;
+	int mFieldLength; // length of the huffman code
+	bool mBitField[NUMCHARS]; // the bit field to represent huffman code
 	FileBufferReader* mFileReader;
 	FileBufferWriter* mFileWriter;
 	FreqInfo* mRoot;
 	FreqInfo** freqTable;
+	void swap(FreqInfo**, int, int);
 	void threeWayQuickSort(FreqInfo**, int, int);
-	unsigned int buildFrequencyTable();
+	void checkStreamIsGood();
+	void buildFrequencyTable();
 	void buildPrefixFreeTree();
 	void writePrefixFreeTree(FreqInfo*);
 	void writeCompressedText();
-	void readPrefixFreeTree();
+	unsigned int readPrefixFreeTree();
 	void parsePrefixFreeTree(FreqInfo*);
-	void decodeCompressedText(int);
+	void decodeCompressedText(unsigned int);
 public:
 	Huffman(char* inFile, char* outFile) {
-		fieldLength = 0;
-		inBytes = 0;
-		outBytes = 0;
+		mFieldLength = 0;
 		mFileReader = new FileBufferReader(inFile);
 		mFileWriter = new FileBufferWriter(outFile);
 	}
