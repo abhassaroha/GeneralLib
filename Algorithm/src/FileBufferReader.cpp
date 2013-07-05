@@ -1,6 +1,5 @@
 #include "FileBufferReader.h"
-#include <iostream>
-using namespace std;
+
 void FileBufferReader::fillBuffer() {
 	mStream.read(mBuffer, BUFFER_SIZE);
 	mReadBytes = mStream.gcount();
