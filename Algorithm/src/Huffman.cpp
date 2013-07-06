@@ -80,7 +80,7 @@ mRoot = new FreqInfo();	\
 	queueTwo->push(mRoot)
 
 void Huffman::buildPrefixFreeTree() {
-	int q1Left = 0;
+	int q1Left = 0, iter;
 	FreqInfo *first, *second;
 	FreqInfo** copy = new FreqInfo*[NUMCHARS];
 	for (int i = 0; i < NUMCHARS; i++)
@@ -91,7 +91,7 @@ void Huffman::buildPrefixFreeTree() {
 	// we decrease number of elems by one each iteration and we stop
 	// after length - 1 iterations of original array, hence second queue's
 	// size is bounded as below.
-	Queue* queueTwo = new Queue(new FreqInfo*[NUMCHARS - 1 - q1Left], 0);
+	Queue* queueTwo = new Queue(new FreqInfo*[NUMCHARS - q1Left - 1], 0);
 	if (queueOne->size() == 1) {
 		// handle size one queues, nothing more to do
 		mRoot = queueOne->pop();
@@ -101,11 +101,12 @@ void Huffman::buildPrefixFreeTree() {
 		// handle that case first
 		first = queueOne->pop();
 		second = queueOne->pop();
+		// number of iterations is length - 1, first iteration ran above
+		iter = NUMCHARS - q1Left - 2;
 		CREATE_ROOT();
-		while (queueOne->good() || queueTwo->size() > 1) {
+		while (iter-- > 0) {
 			if (!queueOne->good()) {
 				// when queuOne has nothing, choose both from queueTwo
-				// while cond check guarantees two elements
 				first = queueTwo->pop();
 				second = queueTwo->pop();
 			}
