@@ -194,6 +194,7 @@ unsigned int Huffman::readPrefixFreeTree() {
 	mRoot = new FreqInfo;
 	unsigned int charCount;
 	mFileReader->open(); 
+	checkStreamIsGood();
 	mFileReader->readInt(charCount);
 	parsePrefixFreeTree(mRoot);
 	return charCount;
@@ -202,6 +203,10 @@ unsigned int Huffman::readPrefixFreeTree() {
 // do a post order traversal and regenerate the prefix free tree
 void Huffman::parsePrefixFreeTree(FreqInfo* root) {
 	bool current; 
+	if (mFieldLength == NUMCHARS)  {
+		cout<<"Corrupt compression header detected!"<<endl;
+		exit(EXIT_FAILURE);
+	}
 	mFileReader->readBit(current);
 	// leaf node
 	if (current) {

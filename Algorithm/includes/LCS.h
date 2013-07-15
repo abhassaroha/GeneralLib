@@ -1,5 +1,5 @@
-#ifndef __LCS__H
-#define __LCS__H
+#ifndef LCS_H
+#define LCS_H
 
 #include <iostream>
 #include <stdlib.h>

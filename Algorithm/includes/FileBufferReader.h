@@ -1,5 +1,5 @@
-#ifndef __FILE_BUFFER_READER_H
-#define __FILE_BUFFER_READER_H
+#ifndef FILE_BUFFER_READER_H
+#define FILE_BUFFER_READER_H
 
 #include <fstream>
 #include "defines.h"

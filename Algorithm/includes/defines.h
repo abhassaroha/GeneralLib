@@ -1,8 +1,8 @@
-#ifndef __DEFINES__H
-#define __DEFINES__H
+#ifndef DEFINES_H
+#define DEFINES_H
 
 // in bytes 
-#define BUFFER_SIZE	65536
+#define BUFFER_SIZE 4012	
 #define BYTE_SIZE 8
 
 #define CURRENT_BYTE(index) \

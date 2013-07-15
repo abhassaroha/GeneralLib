@@ -1,5 +1,5 @@
-#ifndef __LIST_INTERSECTION_H
-#define __LIST_INTERSECTION_H
+#ifndef LIST_INTERSECTION_H
+#define LIST_INTERSECTION_H
 
 #include <stdio.h>
 #include <search.h>

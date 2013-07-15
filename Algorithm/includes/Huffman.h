@@ -1,5 +1,5 @@
-#ifndef __HUFFMAN__H
-#define __HUFFMAN__H
+#ifndef HUFFMAN_H
+#define HUFFMAN_H
 
 #include <fstream>
 #include <iostream>
@@ -8,6 +8,7 @@
 #include "Queue.h"
 #include "FileBufferReader.h"
 #include "FileBufferWriter.h"
+#include <sys/time.h>
 
 using namespace std;
 

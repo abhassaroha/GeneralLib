@@ -1,5 +1,5 @@
-#ifndef __FREQ_INFO_H
-#define __FREQ_INFO_H
+#ifndef FREQ_INFO_H
+#define FREQ_INFO_H
 
 struct FreqInfo {
 	unsigned char codePoint;

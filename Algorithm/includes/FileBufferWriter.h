@@ -1,5 +1,5 @@
-#ifndef __FILE_BUFFER_WRITER_H
-#define __FILE_BUFFER_WRITER_H
+#ifndef FILE_BUFFER_WRITER_H
+#define FILE_BUFFER_WRITER_H
 
 #include <fstream>
 #include "defines.h"

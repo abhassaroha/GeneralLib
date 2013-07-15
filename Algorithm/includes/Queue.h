@@ -1,5 +1,5 @@
-#ifndef __HUFFMAN_QUEUE_H
-#define __HUFFMAN_QUEUE_H
+#ifndef HUFFMAN_QUEUE_H
+#define HUFFMAN_QUEUE_H
 
 #include "FreqInfo.h"
 
