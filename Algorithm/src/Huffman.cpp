@@ -142,7 +142,7 @@ void Huffman::buildPrefixFreeTree() {
 
 // Post order traversal of the prefix tree
 void Huffman::writePrefixFreeTree(FreqInfo* root) {
-	if (root->left == NULL) {
+	if (!root->left) {
 		// leaf node
 		mFileWriter->writeBit(true);
 		// write length of huffman code
@@ -236,7 +236,7 @@ void Huffman::decodeCompressedText(unsigned int charCount) {
 	bool bit;
 	mFileWriter->open();
 	while(charCount > 0) {
-		if (current->left == NULL) {
+		if (!current->left) {
 			mFileWriter->writeByte(current->codePoint);
 			charCount--;
 			current = mRoot;

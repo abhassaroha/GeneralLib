@@ -5,7 +5,7 @@ void printSyntax() {
 	cout<<"diff -d/-h file1 file2"<<endl;
 }
 
-void LCS::generateDiffDP() {
+void LCS::generateDiffDSH() {
 }
 
 void LCS::generateDiffHM() {
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 
 	if (strcmp(argv[1], "-d") == 0) {
 		instance = new LCS(argv[2], argv[3]);
-		instance->generateDiffDP();
+		instance->generateDiffDSH();
 	}
 	else if (strcmp(argv[1], "-m") == 0) {
 		instance = new LCS(argv[2], argv[3]);
