@@ -380,6 +380,7 @@ void swap(int* source, int a, int b) {
 void knuthShuffle(int* inArray, int length) {
 	int i;
 	int current;
+	srand(time(NULL));
 	for (i = length; i > 0;) {
 		current = rand()%i;
 		swap(inArray, current, --i);
@@ -394,14 +395,18 @@ main(int argc, char** argv) {
 	for (int i = 0; i < 10; i++)
 		array[i] = i + 1;
 	knuthShuffle(array, 10);
+	// Test insertion
 	for (int i = 0; i < 10; i++) {
 		testInstance.put(&array[i], &array[i]);
 	}
-	cout<<"First "<<array[0]<<endl;
+	// Test removal
 	testInstance.remove(&array[0]);
-	cout<<"Second "<<array[1]<<endl;
 	testInstance.remove(&array[1]);
-	// testInstance.remove((int*)11);
+	int dup = array[2] + 1;
+	// Test duplicate
+	testInstance.put(&array[2], &dup);
+	// Check balance and order after insert 
+	// and remove.
 	testInstance.print();
 	return 0;
 }

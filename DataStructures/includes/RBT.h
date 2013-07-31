@@ -2,6 +2,7 @@
 #define RBT_H
 
 #include <iostream>
+#include <ctime>
 
 #define RED true
 #define BLACK false
