@@ -109,9 +109,127 @@ RBT<Key, Val>::insertFixup(Node<Key, Val>* node) {
 }
 
 template <class Key, class Val>
+Node<Key, Val>*
+RBT<Key, Val>::getNode(Key* key) {
+	Node<Key, Val>* result = NULL;
+	Node<Key, Val>* current = mRoot;
+	while (current != mSentinel) {
+		if (*current->key == *key) {
+			result = current;
+			break;
+		}
+		else if (*current->key > *key) 
+			current = current->left;
+		else current = current->right;
+	}
+	return result;
+}
+
+template <class Key, class Val>
 void
-RBT<Key, Val>::deleteFixup(Node<Key, Val>* node) {
-	
+RBT<Key, Val>::transplant(	Node<Key, Val>* X,
+Node<Key, Val>* Y) {
+	Node<Key, Val>* parent = X->parent;
+	if (X == mRoot)
+		mRoot = Y;
+	if (X == parent->left)
+		parent->left = Y;
+	else parent->right = Y;
+	Y->parent = parent;	
+}
+
+template <class Key, class Val>
+Node<Key, Val>*
+RBT<Key, Val>::successor(Node<Key, Val>* node) {
+	Node<Key, Val>* result = node->right;
+	if (result != mSentinel) {
+		while(result->left != mSentinel)
+			result = result->left;
+	}
+	return result;
+}
+
+// INVARIANTS -
+// current always carries an extra black color
+// which was added to compensate for loss of a black.
+template <class Key, class Val>
+void
+RBT<Key, Val>::removeFixup(Node<Key, Val>* node) {
+	Node<Key, Val>* current = node;
+	Node<Key, Val>* parent;
+	Node<Key, Val>* sibling;
+	while (current != mRoot && current->color == BLACK) {
+		parent = current->parent;
+		if (current == parent->left) {
+			sibling = parent->right;
+			// Case 1: sibling is red.
+			// Action: convert to case 2.
+			if (sibling->color == RED) { 
+				sibling->color = BLACK;
+				parent->color = RED;
+				leftRotate(parent);
+				sibling = parent->right;
+			}
+			// Case 2: sibling is black.
+			// Action: color sibling red, pass
+			// on the extra black to parent by invariant above.
+			if (sibling->left->color == BLACK 
+				&& sibling->right->color == BLACK) {
+				sibling->color = RED;
+				current = parent;
+			}
+			else {
+				// Case 3: right child is Black.
+				// Action: convert to case 4.
+				if (sibling->right->color == BLACK) {
+					sibling->left->color = BLACK;
+					sibling->color = RED;
+					rightRotate(sibling);
+					sibling = parent->right;
+				}
+				parent->color = BLACK;
+				sibling->color = RED;
+				sibling->right->color = BLACK;
+				leftRotate(parent);
+				current = mRoot; // Terminate, as we are done.
+			}
+		}
+		else {
+			sibling = parent->left;
+			// Case 1: sibling is red.
+			// Action: convert to case 2.
+			if (sibling->color == RED) { 
+				sibling->color = BLACK;
+				parent->color = RED;
+				rightRotate(parent);
+				sibling = parent->left;
+			}
+			// Case 2: sibling is black.
+			// Action: color sibling red, pass
+			// on the extra black to parent by invariant above.
+			if (sibling->left->color == BLACK 
+				&& sibling->right->color == BLACK) {
+				sibling->color = RED;
+				current = parent;
+			}
+			else {
+				// Case 3: right child is Black.
+				// Action: convert to case 4.
+				if (sibling->left->color == BLACK) {
+					sibling->right->color = BLACK;
+					sibling->color = RED;
+					leftRotate(sibling);
+					sibling = parent->left;
+				}
+				parent->color = BLACK;
+				sibling->color = RED;
+				sibling->left->color = BLACK;
+				rightRotate(parent);
+				current = mRoot; // Terminate, as we are done.
+			}
+		}
+	}
+	current->color = BLACK;
 }
 
 template <class Key, class Val>
@@ -163,15 +281,9 @@ RBT<Key, Val>::printTree(Node<Key, Val>* node) {
 template <class Key, class Val>
 Val*
 RBT<Key, Val>::get(Key* key) {
-	Node<Key, Val>* current = mRoot;
 	Val* result = NULL;
-	while (current) {
-		if (current->key == key)
-			result = current->value;
-		else if (current->key > key) 
-			current = current->right;
-		else current = current->left;
-	}
+	Node<Key, Val>* node = getNode(key);
+	if (node) result = node->val;
 	return result;
 }
 
@@ -217,7 +329,40 @@ RBT<Key, Val>::put(Key* key, Val* value) {
 template <class Key, class Val>
 void
 RBT<Key, Val>::remove(Key* key) {
-	
+	Node<Key, Val>* node = getNode(key);
+	Node<Key, Val>* succ;
+	Node<Key, Val>* replaced;
+	bool color;
+	if (node) {
+		color = node->color;
+		if (node->left == mSentinel) {
+			replaced = node->right;
+			transplant(node, replaced);
+		}
+		else if (node->right == mSentinel) {
+			replaced = node->left;
+			transplant(node, replaced);
+		}
+		else {
+			succ = successor(node);
+			replaced = succ->right;
+			if (succ->parent == node) {
+				replaced->parent = succ;
+			}
+			// if (succ->parent != node) {
+			else {
+				transplant(succ, replaced);
+				succ->right = node->right;
+				succ->right->parent = succ;
+			}
+			transplant(node, succ);
+			color = succ->color;
+			succ->color = node->color;
+			succ->left = node->left;
+			succ->left->parent = succ;
+		}
+		if (color == BLACK) removeFixup(replaced);
+	}
 }
 
 template <class Key, class Val>
@@ -252,6 +397,11 @@ main(int argc, char** argv) {
 	for (int i = 0; i < 10; i++) {
 		testInstance.put(&array[i], &array[i]);
 	}
+	cout<<"First "<<array[0]<<endl;
+	testInstance.remove(&array[0]);
+	cout<<"Second "<<array[1]<<endl;
+	testInstance.remove(&array[1]);
+	// testInstance.remove((int*)11);
 	testInstance.print();
 	return 0;
 }

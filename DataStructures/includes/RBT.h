@@ -9,8 +9,8 @@
 template <class Key, class Val>
 struct Node {
 	// sentinel
-	Node():color(BLACK), left(NULL),
-		right(NULL) {};
+	Node():color(BLACK), left(this),
+		right(this) {};
 	Node(Node<Key, Val>* sentinel): color(RED),
 	 left(sentinel), right(sentinel) {};
 	bool color;
@@ -31,7 +31,11 @@ private:
 	void leftRotate(Node<Key, Val>*);
 	void rightRotate(Node<Key, Val>*);
 	void insertFixup(Node<Key, Val>*);
-	void deleteFixup(Node<Key, Val>*);
+	void removeFixup(Node<Key, Val>*);
+	Node<Key, Val>* getNode(Key*);
+	void transplant(Node<Key, Val>*,
+		Node<Key,Val>*);
+	Node<Key, Val>* successor(Node<Key, Val>*);
 	void printTree(Node<Key, Val>*);
 public:
 	RBT(): mSentinel(new Node<Key,Val>()),
