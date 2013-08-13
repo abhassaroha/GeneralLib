@@ -17,10 +17,12 @@ Algorithms
 
 Data Structures
 ---------------
+### Implemented
+* RBT
 
 ### Not Implemented 
+* AVL
 * Fibonacci Heap & Generic heap.
-* Self balancing tree (RB or AVL)
 * Union find.
 
 <b> NOTE: </b> A lot of the above implementations got lost in HDD crash :(. Hence the large section of unimplemented.
