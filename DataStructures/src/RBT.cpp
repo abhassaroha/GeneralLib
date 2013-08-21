@@ -365,6 +365,117 @@ RBT<Key, Val>::remove(Key* key) {
 	}
 }
 
+/**
+ * Find the minimum element.
+ * Does that by following the left child till the
+ * left child is sentinel.
+ */
+template <class Key, class Val>
+Key*
+RBT<Key, Val>::min() {
+	Node<Key, Val>* current = mRoot;
+	while (current->left != mSentinel)
+		current = current->left;
+	return current->key;	
+}
+
+/**
+ * Find the maximum element.
+ * Does that by following right child till
+ * the right child is sentinel.
+ */
+template <class Key, class Val>
+Key*
+RBT<Key, Val>::max() {
+	Node<Key, Val>* current = mRoot;
+	while (current->right != mSentinel)
+		current = current->right;
+	return current->key;
+}
+
+/**
+ * Find the successor for a given key.
+ * If the found key has right sub-tree, 
+ * then find min in that tree.
+ * Else find the first right ancestor.
+ */
+template <class Key, class Val>
+Key*
+RBT<Key, Val>::successor(Key* key) {
+	Key* result = NULL;
+	Node<Key, Val>* current = mRoot;
+	while (current != mSentinel) {
+		if (*current->key == *key) {
+			// if right sub-tree.
+			if (current->right != mSentinel) {
+				current = current->right;
+				while (current->left != mSentinel)
+					current = current->left;
+				result = current->key;
+			}
+			else {
+				while (current->parent != mSentinel && current == current->parent->right)
+					current = current->parent;
+				if (current->parent != mSentinel) result = current->parent->key;
+			}
+			break;
+		}
+		else if (*current->key > *key)
+			current = current->left;
+		else current = current->right;
+	}
+	return result;
+}
+
+template <class Key, class Val>
+Key*
+RBT<Key, Val>::predecessor(Key* key) {
+	Key* result = NULL;
+	Node<Key, Val>* current = mRoot;
+	while (current != mSentinel) {
+		if (*current->key == *key) {
+			// if left sub-tree.
+			if (current->left != mSentinel) {
+				current = current->left;
+				while (current->right != mSentinel)
+					current = current->right;
+				result = current->key;
+			}
+			else {
+				while (current->parent != mSentinel && current == current->parent->left)
+					current = current->parent;
+				if (current->parent != mSentinel) result = current->parent->key;
+			}
+			break;
+		}
+		else if (*current->key > *key)
+			current = current->left;
+		else current = current->right;
+	}
+	return result;
+}
+
+// TODO: add size info and logic to update it 
+// with insert and delete as well as rotate.
+// then implement rank methods below.
+template <class Key, class Val>
+Key*
+RBT<Key, Val>::getKeyWithRank(int rank) {
+	return NULL;
+}
+
+template <class Key, class Val>
+Val*
+RBT<Key, Val>::getValWithRank(int rank) {
+	return NULL;
+}
+
+template <class Key, class Val>
+int
+RBT<Key, Val>::getRank(Key* key) {
+	return 0;
+}
+
 template <class Key, class Val>
 void
 RBT<Key, Val>::print() {
@@ -402,6 +513,23 @@ main(int argc, char** argv) {
 	// Test removal
 	testInstance.remove(&array[0]);
 	testInstance.remove(&array[1]);
+	// Test min
+	int* min = testInstance.min();
+	cout<<"Min "<<*min<<endl;
+	// Test successor of min
+	int* successor = testInstance.successor(min);
+	cout<<"Successor of Min "<<*successor<<endl;
+	// Test predecessor of min
+	int *predecessor = testInstance.predecessor(min);
+	cout<<"Predecessor of Min "<<predecessor<<endl;
+		
+	int* max = testInstance.max();
+	cout<<"Max "<<*max<<endl;
+	successor = testInstance.successor(max);
+	cout<<"Successor of Max "<<successor<<endl;
+	predecessor = testInstance.predecessor(max);
+	cout<<"Predecessor of Max "<<*predecessor<<endl;
+	
 	int dup = array[2] + 1;
 	// Test duplicate
 	testInstance.put(&array[2], &dup);

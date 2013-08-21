@@ -11,15 +11,16 @@ template <class Key, class Val>
 struct Node {
 	// sentinel
 	Node():color(BLACK), left(this),
-		right(this) {};
+		right(this), size(0) {};
 	Node(Node<Key, Val>* sentinel): color(RED),
-	 left(sentinel), right(sentinel) {};
+	 left(sentinel), right(sentinel), size(0) {};
 	bool color;
 	Node* parent;
 	Node* left;
 	Node* right;
 	Key* key;
 	Val* value;
+	int size;
 };
 
 // Red black tree for ordered symbol 
@@ -43,6 +44,13 @@ public:
 	mRoot(mSentinel) {};
 	Val* get(Key*);
 	void put(Key*, Val*);
+	Key* min();
+	Key* max();
+	Key* successor(Key*);
+	Key* predecessor(Key*);
+	Key* getKeyWithRank(int);
+	Val* getValWithRank(int);
+	int getRank(Key*);
 	void remove(Key*);
 	void print();
 };
