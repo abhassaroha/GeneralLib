@@ -15,9 +15,13 @@ RBT<Key, Val>::leftRotate(Node<Key, Val>* node) {
 	Node<Key, Val>* right = node->right;
 	// update node's right child
 	node->right = right->left;
-	if (right->left) right->left->parent = node;
+	node->size -= right->size;
+	node->size += right->left->size;		
+	right->left->parent = node;
 	// update right
+	right->size -= right->left->size;
 	right->left = node;
+	right->size += node->size;		
 	right->parent = parent;
 	// update parent
 	if (node == parent->left)
@@ -36,10 +40,14 @@ RBT<Key, Val>::rightRotate(Node<Key, Val>* node) {
 	Node<Key, Val>* left = node->left;
 	// update node's left child
 	node->left = left->right;
-	if (left->right) left->right->parent = node;
+	node->size -= left->size;
+	node->size += left->right->size;		
+	left->right->parent = node;
 	// update left
-	left->parent = parent;
+	left->size -= left->right->size;
 	left->right = node;
+	left->size += node->size;		
+	left->parent = parent;
 	// update parent
 	if (node == parent->left)
 		parent->left = left;
@@ -85,6 +93,8 @@ RBT<Key, Val>::insertFixup(Node<Key, Val>* node) {
 		// when parent is right-child
 		else {
 			uncle = parent->parent->left;
+			// pull down the black grand parent
+			// and make parent and uncle black.
 			if (uncle->color == RED) {
 				uncle->color = BLACK;
 				parent->color = BLACK;
@@ -132,7 +142,7 @@ Node<Key, Val>* Y) {
 	Node<Key, Val>* parent = X->parent;
 	if (X == mRoot)
 		mRoot = Y;
-	if (X == parent->left)
+	else if (X == parent->left)
 		parent->left = Y;
 	else parent->right = Y;
 	Y->parent = parent;	
@@ -213,7 +223,7 @@ RBT<Key, Val>::removeFixup(Node<Key, Val>* node) {
 				current = parent;
 			}
 			else {
-				// Case 3: right child is Black.
+				// Case 3: left child is Black.
 				// Action: convert to case 4.
 				if (sibling->left->color == BLACK) {
 					sibling->right->color = BLACK;
@@ -230,6 +240,25 @@ RBT<Key, Val>::removeFixup(Node<Key, Val>* node) {
 		}
 	}
 	current->color = BLACK;
+}
+
+template <class Key, class Val>
+Node<Key,Val>*
+RBT<Key, Val>::getNodeWithRank(int rank) {
+	Node<Key, Val>* current = mRoot;
+	Node<Key, Val>* result = NULL;
+	while (current != mSentinel) {
+		if (rank == current->left->size + 1) {
+			result = current;
+			break;
+		}
+		else if (rank > current->left->size + 1) {
+			rank -= (current->left->size + 1);
+			current = current->right;
+		}
+		else { current = current->left; }
+	}
+	return result;
 }
 
 template <class Key, class Val>
@@ -313,9 +342,14 @@ RBT<Key, Val>::put(Key* key, Val* value) {
 		current->value = value;
 		if (previous) {
 			current->parent = previous;
-			if (*previous->key > *key) 
+			if (*previous->key > *key)
 				previous->left = current;
 			else previous->right = current;
+			// Increment size upto root.
+			while (previous != mSentinel) {
+				previous->size++;
+				previous = previous->parent;
+			}
 			insertFixup(current);
 		}
 		else {
@@ -332,6 +366,7 @@ RBT<Key, Val>::remove(Key* key) {
 	Node<Key, Val>* node = getNode(key);
 	Node<Key, Val>* succ;
 	Node<Key, Val>* replaced;
+	Node<Key, Val>* parent;
 	bool color;
 	if (node) {
 		color = node->color;
@@ -354,12 +389,27 @@ RBT<Key, Val>::remove(Key* key) {
 				transplant(succ, replaced);
 				succ->right = node->right;
 				succ->right->parent = succ;
+				// Decrement size for all
+				// ancestors of removed node.
+				parent = replaced->parent;
+				while (parent != succ) {
+					parent->size--;
+					parent = parent->parent;
+				}
 			}
 			transplant(node, succ);
 			color = succ->color;
 			succ->color = node->color;
 			succ->left = node->left;
 			succ->left->parent = succ;
+			succ->size = node->size - 1;
+		}
+		// Decrement size for all
+		// ancestors of removed node.
+		parent = node->parent;
+		while (parent != mSentinel) {
+			parent->size--;
+			parent = parent->parent;
 		}
 		if (color == BLACK) removeFixup(replaced);
 	}
@@ -461,19 +511,42 @@ RBT<Key, Val>::predecessor(Key* key) {
 template <class Key, class Val>
 Key*
 RBT<Key, Val>::getKeyWithRank(int rank) {
-	return NULL;
+	Node<Key, Val>* node = getNodeWithRank(rank);
+	return node ? node->key : NULL;
 }
 
 template <class Key, class Val>
 Val*
 RBT<Key, Val>::getValWithRank(int rank) {
-	return NULL;
+	Node<Key, Val>* node = getNodeWithRank(rank);
+	return node ? node->value : NULL;
 }
 
 template <class Key, class Val>
 int
 RBT<Key, Val>::getRank(Key* key) {
-	return 0;
+	int rank = 0;
+	Node<Key, Val>* current = mRoot;
+	while (current != mSentinel) {
+		if (*key == *current->key) {
+			rank += current->left->size + 1;
+			break;
+		}
+		else if (*key > *current->key) {
+			rank += current->left->size + 1;
+			current = current->right;
+		}
+		else {
+			current = current->left;
+		}		
+	}
+	return rank;
+}
+
+template <class Key, class Val>
+int
+RBT<Key, Val>::size() {
+	return mRoot->size;	
 }
 
 template <class Key, class Val>
@@ -481,6 +554,10 @@ void
 RBT<Key, Val>::print() {
 	printTree(mRoot);
 }
+
+//////////////////////////////////////
+//            Test Client			//
+//////////////////////////////////////
 
 void swap(int* source, int a, int b) {
 	int temp = source[a];
@@ -510,9 +587,14 @@ main(int argc, char** argv) {
 	for (int i = 0; i < 10; i++) {
 		testInstance.put(&array[i], &array[i]);
 	}
+	// Test size
+	cout<<"Size after initialization "<<testInstance.size()<<endl;
 	// Test removal
 	testInstance.remove(&array[0]);
+	cout<<"Size after removing one element "<<testInstance.size()<<endl;
 	testInstance.remove(&array[1]);
+	cout<<"Size after removing second element "<<testInstance.size()<<endl;
+	
 	// Test min
 	int* min = testInstance.min();
 	cout<<"Min "<<*min<<endl;
@@ -521,20 +603,31 @@ main(int argc, char** argv) {
 	cout<<"Successor of Min "<<*successor<<endl;
 	// Test predecessor of min
 	int *predecessor = testInstance.predecessor(min);
-	cout<<"Predecessor of Min "<<predecessor<<endl;
-		
+	cout<<"Predecessor of Min is NULL "
+		<<(predecessor==NULL ? "true" : "false")<<endl;
+	
+	// Test max	
 	int* max = testInstance.max();
 	cout<<"Max "<<*max<<endl;
+	// Test successor of max
 	successor = testInstance.successor(max);
-	cout<<"Successor of Max "<<successor<<endl;
+	cout<<"Successor of Max is NULL "
+		<<(successor == NULL ? "true" : "false")<<endl;
+	// Test predecessor of max
 	predecessor = testInstance.predecessor(max);
 	cout<<"Predecessor of Max "<<*predecessor<<endl;
 	
 	int dup = array[2] + 1;
 	// Test duplicate
 	testInstance.put(&array[2], &dup);
+	cout<<"Size after adding duplicate "<<testInstance.size()<<endl;
 	// Check balance and order after insert 
 	// and remove.
 	testInstance.print();
+	// Rank tests
+	int rank = testInstance.getRank(&array[2]);
+	cout<<"Key with rank "<<rank<<" "<<*testInstance.getKeyWithRank(rank)<<endl;
+	cout<<"Val with rank "<<rank<<" "<<*testInstance.getValWithRank(rank)<<endl;
+
 	return 0;
 }

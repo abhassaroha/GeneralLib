@@ -13,7 +13,7 @@ struct Node {
 	Node():color(BLACK), left(this),
 		right(this), size(0) {};
 	Node(Node<Key, Val>* sentinel): color(RED),
-	 left(sentinel), right(sentinel), size(0) {};
+	 left(sentinel), right(sentinel), size(1) {};
 	bool color;
 	Node* parent;
 	Node* left;
@@ -38,12 +38,14 @@ private:
 	void transplant(Node<Key, Val>*,
 		Node<Key,Val>*);
 	Node<Key, Val>* successor(Node<Key, Val>*);
+	Node<Key, Val>* getNodeWithRank(int);
 	void printTree(Node<Key, Val>*);
 public:
 	RBT(): mSentinel(new Node<Key,Val>()),
 	mRoot(mSentinel) {};
 	Val* get(Key*);
 	void put(Key*, Val*);
+	void remove(Key*);
 	Key* min();
 	Key* max();
 	Key* successor(Key*);
@@ -51,7 +53,7 @@ public:
 	Key* getKeyWithRank(int);
 	Val* getValWithRank(int);
 	int getRank(Key*);
-	void remove(Key*);
+	int size();
 	void print();
 };
 
