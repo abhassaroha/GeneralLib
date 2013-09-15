@@ -140,8 +140,8 @@ RBT<Key, Val>::getRBTNode(Key* key) {
 
 template <class Key, class Val>
 void
-RBT<Key, Val>::transplant(	RBTNode<Key, Val>* X,
-		RBTNode<Key, Val>* Y) {
+	RBT<Key, Val>::transplant(	RBTNode<Key, Val>* X,
+RBTNode<Key, Val>* Y) {
 	RBTNode<Key, Val>* parent = X->parent;
 	if (X == mRoot)
 		mRoot = Y;
@@ -187,7 +187,7 @@ RBT<Key, Val>::removeFixup(RBTNode<Key, Val>* node) {
 			// Action: color sibling red, pass
 			// on the extra black to parent by invariant above.
 			if (sibling->left->color == BLACK 
-					&& sibling->right->color == BLACK) {
+			&& sibling->right->color == BLACK) {
 				sibling->color = RED;
 				current = parent;
 			}
@@ -221,7 +221,7 @@ RBT<Key, Val>::removeFixup(RBTNode<Key, Val>* node) {
 			// Action: color sibling red, pass
 			// on the extra black to parent by invariant above.
 			if (sibling->left->color == BLACK 
-					&& sibling->right->color == BLACK) {
+			&& sibling->right->color == BLACK) {
 				sibling->color = RED;
 				current = parent;
 			}

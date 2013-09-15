@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+using namespace std;
 template <class Key, class Val>
 struct AVLNode {
 	AVLNode(AVLNode<Key, Val>* sentinel):left(sentinel), right(sentinel), 
@@ -28,6 +29,7 @@ class AVLTree {
 		void leftRotate(AVLNode<Key, Val>*);
 		void rightRotate(AVLNode<Key, Val>*);
 		void insertFixup(AVLNode<Key, Val>*);
+		void printTree(AVLNode<Key, Val>*);
 	public:
 		AVLTree():mSentinel(new AVLNode<Key, Val>()), mRoot(mSentinel) {};
 		Val* get(Key*);
