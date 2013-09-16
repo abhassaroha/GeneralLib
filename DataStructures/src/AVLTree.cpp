@@ -16,15 +16,13 @@ AVLTree<Key, Val>::leftRotate(AVLNode<Key, Val>* node)
 	node->right = right->left;
 	node->size -= right->size;
 	node->size += right->left->size;
-	node->height = 	MAX(node->left->height, node->right->height);
-	node->height++;
+	node->height = 	MAX(node->left->height, node->right->height) + 1;
 	right->left->parent = node;
 	// update right
 	right->size -= right->left->size;
 	right->left = node;
 	right->size += node->size;
-	right->height = MAX(right->left->height, right->right->height);
-	right->height++;
+	right->height = MAX(right->left->height, right->right->height) + 1;
 	right->parent = parent;
 	// update parent
 	if (parent != mSentinel) {
@@ -32,8 +30,7 @@ AVLTree<Key, Val>::leftRotate(AVLNode<Key, Val>* node)
 			parent->left = right;
 		else
 			parent->right = right;
-		parent->height = MAX(parent->left->height, parent->right->height);
-		parent->height++;
+		parent->height = MAX(parent->left->height, parent->right->height) + 1;
 	}
 	// update node's parent
 	node->parent = right;
@@ -50,15 +47,13 @@ AVLTree<Key, Val>::rightRotate(AVLNode<Key, Val>* node)
 	node->left = left->right;
 	node->size -= left->size;
 	node->size += left->right->size;
-	node->height = 	MAX(node->left->height, node->right->height);
-	node->height++;		
+	node->height = 	MAX(node->left->height, node->right->height) + 1;
 	left->right->parent = node;
 	// update left
 	left->size -= left->right->size;
 	left->right = node;
 	left->size += node->size;
-	left->height = MAX(left->left->height, left->right->height);
-	left->height++;	
+	left->height = MAX(left->left->height, left->right->height) + 1;
 	left->parent = parent;
 	// update parent
 	if (parent != mSentinel) 
@@ -67,8 +62,7 @@ AVLTree<Key, Val>::rightRotate(AVLNode<Key, Val>* node)
 			parent->left = left;
 		else
 			parent->right = left;
-		parent->height = MAX(parent->left->height, parent->right->height);
-		parent->height++;
+		parent->height = MAX(parent->left->height, parent->right->height) + 1;
 	}
 	// update node's parent
 	node->parent = left;
@@ -114,6 +108,8 @@ AVLTree<Key, Val>::insertFixup(AVLNode<Key, Val>* node)
 			}
 			leftRotate(node);
 		}
+		// make sure height is consistent after previous rotations
+		else node->height = MAX(node->left->height, node->right->height) + 1;
 		node = parent;
 	}
 }
@@ -152,6 +148,7 @@ AVLTree<Key, Val>::put(Key* key, Val* value) {
 		}
 	}
 	
+	int newVal;
 	if (current == mSentinel) {
 		current = new AVLNode<Key, Val>(mSentinel);
 		current->key = key;
@@ -161,14 +158,13 @@ AVLTree<Key, Val>::put(Key* key, Val* value) {
 			if (*previous->key > *current->key)
 				previous->left = current;
 			else previous->right = current;
-			current = previous;
-			while (current != mSentinel) {
-				current->height = 
-					MAX(current->left->height, current->right->height);
-				current->height++;
-				current = current->parent;
+			while (previous != mSentinel) {
+				newVal = MAX(previous->left->height, previous->right->height) + 1;
+				if (newVal > previous->height) previous->height = newVal;
+				else break;
+				previous = previous->parent;
 			}
-			insertFixup(previous);
+			insertFixup(current->parent);
 		}
 		else {
 			mRoot = current;
@@ -315,19 +311,19 @@ void
 AVLTree<Key, Val>::printTree(AVLNode<Key,Val>* root) {
 	if (root != mSentinel) {
 		// Assert invariant
-		if (root->left->height > root->right->height +1 ||
+		if (root->left->height > root->right->height + 1 ||
 			root->left->height + 1 < root->right->height)
 		{
 			cout<<"Imbalanced tree at node "<<*root->key<<" -> "<<*root->value<<" "<<endl;
 			exit(EXIT_FAILURE);
 		}
-		if (root->height - 1 != MAX(root->left->height, root->right->height)) {
+		if (root->height != MAX(root->left->height, root->right->height) + 1) {
 			cout<<"Height invariant violated at "<<*root->key<<" -> "<<*root->value<<" H "<<root->height<<" ";
 			cout<<"LH "<<root->left->height<<" RH "<<root->right->height<<endl;
 			exit(EXIT_FAILURE);
 		}
-		cout<<*root->key<<" -> "<<*root->value<<" ";
 		printTree(root->left);
+		cout<<*root->key<<" -> "<<*root->value<<" ";
 		printTree(root->right);
 	}
 }
