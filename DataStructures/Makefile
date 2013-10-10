@@ -7,3 +7,7 @@ rbt: $(RBT)
 AVL=./src/AVLTree.cpp
 avl: $(AVL)
 	g++ -Wall $(AVL) -I$(INCLUDE_DIR) -o bin/avl
+
+VECTORN=./src/VectorN.cpp
+vecn: $(VECTORN)
+	g++ -Wall $(VECTORN) -I$(INCLUDE_DIR) -o bin/vecn
