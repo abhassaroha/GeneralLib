@@ -1,17 +1,20 @@
 #include "LCS.h"
 
-void printSyntax() {
-	cout<<"Usage:"<<endl;
-	cout<<"diff -d/-h file1 file2"<<endl;
-}
+namespace algorithms {
+	void printSyntax() {
+		cout<<"Usage:"<<endl;
+		cout<<"diff -d/-h file1 file2"<<endl;
+	}
 
-void LCS::generateDiffDSH() {
-}
+	void LCS::generateDiffDSH() {
+	}
 
-void LCS::generateDiffHM() {
+	void LCS::generateDiffHM() {
+	}
 }
 
 int main(int argc, char** argv) {
+	using namespace algorithms;
 	LCS* instance;
 	if (argc < 2) {
 		cout<<"No argument supplied"<<endl;
