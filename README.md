@@ -19,9 +19,9 @@ Data Structures
 ---------------
 ### Implemented
 * RBT
+* AVL
 
 ### Not Implemented 
-* AVL
 * Fibonacci Heap & Generic heap.
 * Union find.
 
