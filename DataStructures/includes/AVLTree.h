@@ -7,24 +7,24 @@ using namespace std;
 
 namespace datastructures {
 	template <class Key, class Val>
-    struct AVLNode {
-        AVLNode(AVLNode<Key, Val>* sentinel):left(sentinel), right(sentinel),
-        height(1), size(1) {};
-        // sentinel
-        AVLNode():left(NULL), right(NULL),
-        height(0), size(0) {};
-        Key* key;
-        Val* value;
-        AVLNode* left;
-        AVLNode* right;
-        AVLNode* parent;
-        int height;
-        int size;
-    };
-    
-	template <class Key, class Val>
     class AVLTree {
     private:
+		template <class Key, class Val>
+	    struct AVLNode {
+	        AVLNode(AVLNode<Key, Val>* sentinel):left(sentinel), right(sentinel),
+	        height(1), size(1) {};
+	        // sentinel
+	        AVLNode():left(NULL), right(NULL),
+	        height(0), size(0) {};
+	        Key* key;
+	        Val* value;
+	        AVLNode* left;
+	        AVLNode* right;
+	        AVLNode* parent;
+	        int height;
+	        int size;
+	    };
+	
         AVLNode<Key, Val>* mSentinel;
         AVLNode<Key, Val>* mRoot;
         AVLNode<Key, Val>* getAVLNodeWithRank(int);

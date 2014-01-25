@@ -273,9 +273,6 @@ namespace datastructures {
         return result;
     }
     
-	// TODO: add size info and logic to update it
-	// with insert and delete as well as rotate.
-	// then implement rank methods below.
 	template <class Key, class Val>
     Key*
     AVLTree<Key, Val>::getKeyWithRank(int rank) {

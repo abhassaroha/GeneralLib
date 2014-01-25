@@ -1,4 +1,284 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Workspace
    version = "1.0">
+   <Group
+      location = "group:"
+      name = "">
+      <Group
+         location = "group:Algorithm"
+         name = "Algorithm">
+         <Group
+            location = "group:bin"
+            name = "bin">
+            <FileRef
+               location = "group:diff">
+            </FileRef>
+            <FileRef
+               location = "group:huffman">
+            </FileRef>
+            <FileRef
+               location = "group:list_intersect">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:data"
+            name = "data">
+            <FileRef
+               location = "group:quick">
+            </FileRef>
+            <FileRef
+               location = "group:quickbrownfox.txt">
+            </FileRef>
+            <FileRef
+               location = "group:test2">
+            </FileRef>
+            <FileRef
+               location = "group:test2_r">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:includes"
+            name = "includes">
+            <FileRef
+               location = "group:defines.h">
+            </FileRef>
+            <FileRef
+               location = "group:FileBufferReader.h">
+            </FileRef>
+            <FileRef
+               location = "group:FileBufferWriter.h">
+            </FileRef>
+            <FileRef
+               location = "group:FreqInfo.h">
+            </FileRef>
+            <FileRef
+               location = "group:Huffman.h">
+            </FileRef>
+            <FileRef
+               location = "group:LCS.h">
+            </FileRef>
+            <FileRef
+               location = "group:ListIntersection.h">
+            </FileRef>
+            <FileRef
+               location = "group:LZW.h">
+            </FileRef>
+            <FileRef
+               location = "group:Queue.h">
+            </FileRef>
+         </Group>
+         <FileRef
+            location = "group:Makefile">
+         </FileRef>
+         <Group
+            location = "group:src"
+            name = "src">
+            <FileRef
+               location = "group:FileBufferReader.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:FileBufferWriter.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:Huffman.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:LCS.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:ListIntersection.c">
+            </FileRef>
+            <FileRef
+               location = "group:LZW.cpp">
+            </FileRef>
+         </Group>
+      </Group>
+      <Group
+         location = "group:Application"
+         name = "Application">
+         <Group
+            location = "group:bin"
+            name = "bin">
+         </Group>
+         <Group
+            location = "group:includes"
+            name = "includes">
+            <FileRef
+               location = "group:Client.h">
+            </FileRef>
+            <FileRef
+               location = "group:JSONDecode.h">
+            </FileRef>
+            <FileRef
+               location = "group:JSONEncode.h">
+            </FileRef>
+            <FileRef
+               location = "group:Server.h">
+            </FileRef>
+         </Group>
+         <FileRef
+            location = "group:Makefile">
+         </FileRef>
+         <Group
+            location = "group:src"
+            name = "src">
+            <FileRef
+               location = "group:Client.c">
+            </FileRef>
+            <FileRef
+               location = "group:JSONDecode.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:JSONEncode.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:Server.c">
+            </FileRef>
+         </Group>
+      </Group>
+      <FileRef
+         location = "group:change_author.sh">
+      </FileRef>
+      <Group
+         location = "group:CodeChef"
+         name = "CodeChef">
+         <FileRef
+            location = "group:a.out">
+         </FileRef>
+         <FileRef
+            location = "group:BytesAndKnaves.cpp">
+         </FileRef>
+         <FileRef
+            location = "group:PRIMPATT.c">
+         </FileRef>
+         <FileRef
+            location = "group:test.c">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:Common"
+         name = "Common">
+         <FileRef
+            location = "group:FloatEquality.cpp">
+         </FileRef>
+         <FileRef
+            location = "group:FloatEquality.h">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:DataStructures"
+         name = "DataStructures">
+         <Group
+            location = "group:bin"
+            name = "bin">
+            <FileRef
+               location = "group:avl">
+            </FileRef>
+            <FileRef
+               location = "group:avl.dSYM">
+            </FileRef>
+            <FileRef
+               location = "group:FloatEquality.o">
+            </FileRef>
+            <FileRef
+               location = "group:rbt_test">
+            </FileRef>
+            <FileRef
+               location = "group:rbt_test.dSYM">
+            </FileRef>
+            <FileRef
+               location = "group:vecn">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:includes"
+            name = "includes">
+            <FileRef
+               location = "group:AdjListGraph.h">
+            </FileRef>
+            <FileRef
+               location = "group:AdjMatrixGraph.h">
+            </FileRef>
+            <FileRef
+               location = "group:AVLTree.h">
+            </FileRef>
+            <FileRef
+               location = "group:BaseDiGraph.h">
+            </FileRef>
+            <FileRef
+               location = "group:BaseGraph.h">
+            </FileRef>
+            <FileRef
+               location = "group:PersistentST.h">
+            </FileRef>
+            <FileRef
+               location = "group:RBT.h">
+            </FileRef>
+            <FileRef
+               location = "group:VectorN.h">
+            </FileRef>
+         </Group>
+         <FileRef
+            location = "group:Makefile">
+         </FileRef>
+         <Group
+            location = "group:src"
+            name = "src">
+            <FileRef
+               location = "group:SplayTrees.h">
+            </FileRef>
+            <FileRef
+               location = "group:AdjListGraph.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:AdjMatrixGraph.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:AVLTree.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:BaseDiGraph.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:BaseGraph.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:PersistentST.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:RBT.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:VectorN.cpp">
+            </FileRef>
+            <FileRef
+               location = "group:SplayTrees.cpp">
+            </FileRef>
+         </Group>
+         <FileRef
+            location = "group:test.sh">
+         </FileRef>
+      </Group>
+      <FileRef
+         location = "group:function_pointer.c">
+      </FileRef>
+      <FileRef
+         location = "group:GeneralLib.xcworkspace">
+      </FileRef>
+      <FileRef
+         location = "group:LICENCE">
+      </FileRef>
+      <FileRef
+         location = "group:README.md">
+      </FileRef>
+      <FileRef
+         location = "group:test.c">
+      </FileRef>
+      <FileRef
+         location = "group:test.s">
+      </FileRef>
+      <FileRef
+         location = "group:test_spiral.c">
+      </FileRef>
+   </Group>
 </Workspace>
