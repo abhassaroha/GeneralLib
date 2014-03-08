@@ -62,7 +62,7 @@ namespace algorithms {
 		} 
 		mFileReader->readByte(current);
 		while (mFileReader->good()) {
-			freqTable[current]->freq++;
+			freqTable[(int)current]->freq++;
 			charCount++;
 			mFileReader->readByte(current);
 		}
@@ -175,7 +175,7 @@ namespace algorithms {
 		FreqInfo* node;
 		mFileReader->readByte(current);
 		while (mFileReader->good()) {
-			node = freqTable[current];
+			node = freqTable[(int)current];
 			for (int i = 0; i < node->fieldLength; i++) {
 				mFileWriter->writeBit(node->bitField[i]);
 			}

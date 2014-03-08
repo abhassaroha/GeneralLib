@@ -7,7 +7,7 @@ union Float {
 	bool negative() { return i >> 31;}
 };
 
-bool compareFloats(float A, float B, float maxAbsolute = FLT_EPSILON, int maxUlps = MAX_ULPS) {
+bool compareFloats(float A, float B, float maxAbsolute /* = FLT_EPSILON */, int maxUlps /* = MAX_ULPS */) {
 	bool result = false;
 	if (abs(A - B) < maxAbsolute) { 
 		result = true;

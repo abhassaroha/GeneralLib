@@ -6,8 +6,8 @@ C11=g++ -std=c++11 -Wall
 ENABLE_THREAD=-pthread -Wl,--no-as-needed
 
 FLOAT_EQ=../Common/FloatEquality.cpp
-FloatEquality.o: $(FLOAT_EQ) 
-	g++ -c $(FLOAT_EQ) -o bin/FloatEquality.o
+bin/FloatEquality.o: $(FLOAT_EQ) 
+	g++ -c $(FLOAT_EQ) -o $@ 
 
 RBT=./src/RBT.cpp
 rbt: $(RBT)

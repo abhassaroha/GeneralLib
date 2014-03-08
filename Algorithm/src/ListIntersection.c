@@ -1,11 +1,12 @@
 #include "ListIntersection.h"
+
 static int* data1;
 static int* data2;
 
 #define DISP_STAT \
 	printf("Duplicate count %d\n", duplicateCount);														\
-	printf("Start Time %d\n", startTime.tv_usec);															\
-	printf("End Time %d\n", endTime.tv_usec);																	\
+	printf("Start Time %ld\n", startTime.tv_usec);															\
+	printf("End Time %ld\n", endTime.tv_usec);																	\
 	printf("Elapsed Time %f \n", (float)(endTime.tv_sec - startTime.tv_sec + 	\
 				(endTime.tv_usec - startTime.tv_usec)/1000))
 
