@@ -6,18 +6,19 @@
 using namespace std;
 
 namespace datastructures {
-	template <class Key, class Val>
+	template <typename Key, typename Val>
     class AVLTree {
     private:
-		template <class Key, class Val>
+		template <typename _Key, typename _Val>
 	    struct AVLNode {
-	        AVLNode(AVLNode<Key, Val>* sentinel):left(sentinel), right(sentinel),
+	        AVLNode(AVLNode<_Key, _Val>* sentinel) : left(sentinel),
+			right(sentinel),
 	        height(1), size(1) {};
 	        // sentinel
 	        AVLNode():left(NULL), right(NULL),
 	        height(0), size(0) {};
-	        Key* key;
-	        Val* value;
+	        _Key* key;
+	        _Val* value;
 	        AVLNode* left;
 	        AVLNode* right;
 	        AVLNode* parent;

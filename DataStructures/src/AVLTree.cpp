@@ -1,5 +1,7 @@
 #include "AVLTree.h"
 
+#include <cstdlib>
+
 namespace datastructures {
     
 	/*********************/
@@ -74,7 +76,7 @@ namespace datastructures {
     }
     
 	template <class Key, class Val>
-    AVLNode<Key,Val>*
+    AVLTree<Key, Val>::AVLNode<Key,Val>*
     AVLTree<Key, Val>::getAVLNodeWithRank(int rank) {
         AVLNode<Key, Val>* current = mRoot;
         AVLNode<Key, Val>* result = NULL;
