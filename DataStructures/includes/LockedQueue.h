@@ -5,6 +5,7 @@
 #include <mutex>
 #include <vector>
 #include <condition_variable>
+#include <atomic>
 
 template <typename T>
 class LockedQueue {
@@ -12,10 +13,13 @@ class LockedQueue {
 		LockedQueue(int capacity) : _capacity(capacity) {
 			_data.reserve(_capacity);
 		}
-		~LockedQueue() { _data.erase(_data.begin(), _data.end()); }
+		~LockedQueue() { if(_data.size()) _data.erase(_data.begin(), _data.end()); }
 		void put(T elem);
 		T get();
 		int size();
+#ifdef DEBUG
+		void try_lock();
+#endif
 	private:
 		std::mutex _m;
 		std::vector<T> _data;
