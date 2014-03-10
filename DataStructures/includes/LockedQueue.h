@@ -12,6 +12,7 @@ class LockedQueue {
 	public:
 		LockedQueue(int capacity) : _capacity(capacity) {
 			_data.reserve(_capacity);
+			_count = 0;
 		}
 		~LockedQueue() { if(_data.size()) _data.erase(_data.begin(), _data.end()); }
 		void put(T elem);
@@ -23,7 +24,9 @@ class LockedQueue {
 	private:
 		std::mutex _m;
 		std::vector<T> _data;
-		std::condition_variable _cv;
+		std::condition_variable _full;
+		std::condition_variable _empty;
+		std::atomic_int _count;
 		int _capacity;
 };
 

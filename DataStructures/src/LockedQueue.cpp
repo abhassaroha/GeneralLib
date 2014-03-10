@@ -13,31 +13,38 @@
 template <typename T>
 void LockedQueue<T>::put(T elem)
 {
+	int count;
 	std::unique_lock<std::mutex> lock(_m);
-	_cv.wait(lock, [=] { return _data.size() < _capacity; });
+	_full.wait(lock, [=] { return _data.size() < _capacity; });
 	_data.push_back(elem);
+	count = _count++;
 #ifdef DEBUG
 	std::cout<<"Put into queue "<<elem<<std::endl;
 #endif
+	_full.notify_one(); // signal other waiting producers
 	lock.unlock();
-	// TODO: investigate using notify_one and still avoiding deadlock
-	_cv.notify_all();
+	if (count == 0) // notify waiting consumers
+		_empty.notify_one();
 }
 
 template <typename T>
 T LockedQueue<T>::get()
 {
+	int count;
 	// TODO: try using different locks for put and get
+	// Is std::vector the issue?
 	std::unique_lock<std::mutex> lock(_m);
-	_cv.wait(lock, [=] { return _data.size() > 0; });
+	_empty.wait(lock, [=] { return _data.size() > 0; });
 	T result = *_data.begin();
+	_data.erase(_data.begin());
+	count = _count--;
 #ifdef DEBUG
 	std::cout<<"Get from queue "<<result<<std::endl;
 #endif
-	_data.erase(_data.begin());
+	_empty.notify_one(); // signal other waiting consumers
 	lock.unlock();
-	_cv.notify_all();
-	// TODO: investigate using notify_one and still avoiding deadlock
+	if (count == _capacity) // notify waiting producers
+		_full.notify_one();
 	return result;
 }
 
