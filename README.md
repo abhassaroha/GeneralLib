@@ -17,10 +17,20 @@ Algorithms
 
 Data Structures
 ---------------
+
 ### Implemented
 * RBT
 * AVL
+* Thread safe Bounded Queue with locks and conditionals (C++11)
+* Heap (Default Max, change to Min by changing comparator)
+* N dimensional vector, with basic set of operations
 
 ### Not Implemented 
 * Fibonacci Heap & Generic heap.
 * Union find.
+
+Applications
+------------
+
+### Not Implemented
+* A simple chat client (partial)
