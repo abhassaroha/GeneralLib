@@ -1,30 +1,30 @@
 INCLUDE_DIR=./includes/
 COMMON=../Common/
-CPP=g++ -Wall
-C11=g++ -std=c++11 -Wall
+CPP=g++ -Wall -I$(INCLUDE_DIR)
+C11=g++ -std=c++11 -Wall -I$(INCLUDE_DIR)
 # gcc workaround
 ENABLE_THREAD=-pthread -Wl,--no-as-needed
 
-FLOAT_EQ=../Common/FloatEquality.cpp
-bin/FloatEquality.o: $(FLOAT_EQ) 
-	g++ -c $(FLOAT_EQ) -o $@ 
+bin/FloatEquality.o: ../Common/FloatEquality.cpp
+	g++ -c $< -o $@ 
 
-RBT=./src/RBT.cpp
-rbt: $(RBT)
-	$(CPP) $(RBT) -I$(INCLUDE_DIR) -o bin/rbt_test
+rbt: ./src/RBT.cpp
+	$(CPP) $< -o bin/$@
 
-AVL=./src/AVLTree.cpp
-avl: $(AVL)
-	$(CPP) $(AVL) -I$(INCLUDE_DIR) -o bin/avl
+avl: ./src/AVLTree.cpp
+	$(CPP) $< -o bin/$@
 
-VECTORN=./src/VectorN.cpp ./bin/FloatEquality.o
-vecn: $(VECTORN)
-	$(CPP) $(VECTORN) -I$(INCLUDE_DIR) -I$(COMMON) -o bin/vecn
+vecn: ./src/VectorN.cpp ./bin/FloatEquality.o
+	$(CPP) -I$(COMMON) $? -o bin/$@
 
-LCKDQ=./src/LockedQueue.cpp
-lckdq: $(LCKDQ)
-	$(C11) $(ENABLE_THREAD) $(LCKDQ) -I$(INCLUDE_DIR) -o bin/lckdq
+lckdq: ./src/LockedQueue.cpp
+	$(C11) $(ENABLE_THREAD) $< -o bin/$@
 
-LCKFQ=./src/LockFreeQueue.cpp
-lckfq: $(LCKFQ)
-	$(C11) $(ENABLE_THREAD) $(LCKFQ) -I$(INCLUDE_DIR) -o bin/lckfq
+lckfq: ./src/LockFreeQueue.cpp
+	$(C11) $(ENABLE_THREAD) $< -o bin/$@
+
+heap: ./src/Heap.cpp
+	$(C11) -DDEBUG $< -o bin/$@ 
+
+clean:
+	rm -rf bin/*
