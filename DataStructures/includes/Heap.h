@@ -8,7 +8,8 @@ template <typename T, typename default_op = std::greater<T>>
 class Heap {
 	public:
 		Heap(long size) : _size(size) {};
-		Heap(T *arr, long size) : _size(size) {
+		Heap(T *arr, long size) : _size(size), _comp_op(default_op())
+		{
 			build_heap(arr);
 		};
 		T front();
@@ -29,5 +30,6 @@ class Heap {
 		inline long parent_elem(long i) { return (i - 1)/2; }
 		long _size;
 		std::vector<T> _data;
+		std::function<bool(const T&, const T&)> _comp_op;
 };
 #endif

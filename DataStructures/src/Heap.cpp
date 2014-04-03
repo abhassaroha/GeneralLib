@@ -37,9 +37,13 @@ void Heap<T, default_op>::remove(T elem)
 	}
 	if (index != -1) {
 		std::swap(_data[index], _data[_size - 1]);
+		bool up = _comp_op(_data[index], _data[_size - 1]);
 		_data.pop_back();
 		_size--;
-		bubble_down(index);
+		if (up)
+			bubble_up(index);
+		else
+			bubble_down(index);
 	}
 }
 
@@ -61,10 +65,10 @@ void Heap<T, default_op>::bubble_down(long i)
 		long largest = i;
 		long left = left_elem(i);
 		long right = right_elem(i);
-		if (left < _size && default_op()(_data[left], _data[largest]))
+		if (left < _size && _comp_op(_data[left], _data[largest]))
 			largest = left; 
 		if (right < _size &&
-				default_op()(_data[right], _data[largest]))
+				_comp_op(_data[right], _data[largest]))
 			largest = right;
 		if (largest != i) { 
 			std::swap(_data[i], _data[largest]);
@@ -79,7 +83,7 @@ void Heap<T, default_op>::bubble_up(long i)
 {
 	while (i > 0) {
 		int parent = parent_elem(i);
-		if (default_op()(_data[i], _data[parent])) { 
+		if (_comp_op(_data[i], _data[parent])) { 
 			std::swap(_data[i], _data[parent]);
 			i = parent; 
 		}
@@ -100,8 +104,8 @@ void Heap<T, default_op>::print_data()
 		cout<<_data[i]<<" ";
 		int left = left_elem(i);
 		int right = right_elem(i);
-		if ((left < _size && default_op()(_data[left], _data[i])) ||
-			(right <_size && default_op()(_data[right], _data[i]))) {
+		if ((left < _size && _comp_op(_data[left], _data[i])) ||
+			(right <_size && _comp_op(_data[right], _data[i]))) {
 			cout<<"Invariant violated"<<std::endl;
 			exit(EXIT_FAILURE);
 		}
@@ -113,15 +117,16 @@ void Heap<T, default_op>::print_data()
 #endif
 
 /** Test Client */
+#define NUM_ELEMS 7
 int main()
 {
-	int data[5] = {1, 2, 3, 4, 5};
-	Heap<int> inst(data, 5);
+	int data[NUM_ELEMS] = {7, 4, 6, 1, 2, 3, 5};
+	Heap<int> inst(data, NUM_ELEMS);
 	std::cout<<"Size "<<inst.size()<<std::endl;
-	inst.add(6);
-	std::cout<<"Size after add "<<inst.size()<<std::endl;
 	inst.remove(1);
 	std::cout<<"Size after remove "<<inst.size()<<std::endl;
+	inst.add(8);
+	std::cout<<"Size after add "<<inst.size()<<std::endl;
 	std::cout<<"Front "<<inst.front()<<std::endl;
 	std::cout<<"Size after front "<<inst.size()<<std::endl;
 	std::cout<<"Get "<<inst.get()<<std::endl;
